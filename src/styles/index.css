@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@import "./skins.css";
+@import "./theme.css";
+
+body {
+  @apply bg-background text-foreground;
+}
+
+/*
+ * คลาสที่ต้องเอาไป @apply ต่อในคลาสอื่นต้องประกาศเป็น @utility
+ * เพราะ Tailwind v4 @apply คลาสที่อยู่ใน @layer components ไม่ได้
+ */
+@utility btn {
+  @apply inline-flex items-center justify-center rounded-control px-4 py-2 text-sm font-medium transition-colors;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  @apply disabled:opacity-50 disabled:pointer-events-none;
+}
+
+@utility badge {
+  @apply inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-muted/15 text-muted;
+}
+
+@utility input {
+  @apply w-full rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring;
+}
+
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-card p-4;
+  }
+  .card-flat {
+    @apply bg-card rounded-card p-4;
+  }
+  .card.lift {
+    @apply shadow-card;
+  }
+  .card.lift:hover {
+    @apply shadow-lift;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-500 text-on-brand hover:bg-brand-600;
+  }
+  .btn-secondary {
+    @apply btn bg-card border border-border text-foreground hover:bg-muted/10;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-muted hover:bg-muted/10 hover:text-foreground;
+  }
+  /* ปุ่มตัวเลือกที่กำลังถูกเลือกอยู่ เช่น ตัวเลือกโหมดใน ThemeSwitcher */
+  .btn-ghost[aria-pressed="true"] {
+    @apply bg-brand-subtle text-brand-500;
+  }
+
+  .badge-success {
+    @apply badge bg-success-subtle text-success;
+  }
+  .badge-danger {
+    @apply badge bg-danger-subtle text-danger;
+  }
+  .badge-warning {
+    @apply badge bg-warning-subtle text-warning;
+  }
+
+  .select {
+    @apply input appearance-none bg-card pr-8;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-foreground mb-1;
+  }
+  .form-error {
+    @apply text-sm text-danger;
+  }
+}

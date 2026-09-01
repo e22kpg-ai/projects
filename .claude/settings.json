@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(rm -rf .next)",
+      "Bash(npx eslint *)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(npx --yes @next/codemod@canary middleware-to-proxy --force)",
+      "Bash(npm run *)",
+      "Bash(echo \"started with pid $!\")"
+    ]
+  }
+}

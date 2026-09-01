@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes create-next-app@latest .tmp-scaffold --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(npx --yes create-next-app@latest tmp-scaffold --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/login)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/rooms)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/signup)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(tail -60 /tmp/dev-server.log 2>&1)",
+      "Read(//tmp/**)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 4496 //T //F)",
+      "Bash(turso --version)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(rm -f /tmp/dev-server.log)",
+      "Bash(echo \"started with pid $!\")",
+      "Bash(rm -f cookies.txt)",
+      "Bash(curl -s -c cookies.txt -b cookies.txt -X POST http://localhost:3000/api/auth/sign-up/email -H 'Content-Type: application/json' -d '{\"email\":\"tester@example.com\",\"password\":\"password123\",\"name\":\"Tester\"}' -w '\\\\nHTTP_STATUS:%{http_code}\\\\n')",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(timeout 30 npx --yes @better-auth/cli generate --help)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(curl -s -c cookies.txt -b cookies.txt -X POST http://localhost:3000/api/auth/sign-up/email -H 'Content-Type: application/json' -d '{\"email\":\"tester2@example.com\",\"password\":\"password123\",\"name\":\"Tester Two\"}' -w '\\\\nHTTP_STATUS:%{http_code}\\\\n')",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/better-auth/package.json'\\).version\\)\")",
+      "Read(//c//**)",
+      "Bash(npm ls *)",
+      "Bash(npx --yes @better-auth/cli --version)"
+    ]
+  }
+}

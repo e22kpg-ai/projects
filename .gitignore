@@ -32,9 +32,14 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# local sqlite db (used when TURSO_DATABASE_URL points to a local file for dev/testing)
+*.db
+*.db-*
 
 # typescript
 *.tsbuildinfo

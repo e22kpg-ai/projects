@@ -1,0 +1,115 @@
+/*
+ * ชั้นที่ 2 + 3 ของ design system
+ *
+ * ชั้นที่ 2 — เลือกโหมด: หยิบค่า --skin-*-light หรือ --skin-*-dark จาก skins.css มาใส่ --ds-*
+ *            เขียนครั้งเดียวจบ ไม่ผูกกับ skin ไหนเลย เพิ่ม skin ใหม่ก็ไม่ต้องแก้ไฟล์นี้
+ * ชั้นที่ 3 — สะพานไป Tailwind: @theme inline map --ds-* เข้ากับชื่อ token ของ Tailwind
+ *
+ * ทำไมต้อง `inline`: ถ้าไม่ใส่ Tailwind จะ resolve ค่าสีตอน build แล้วฝังลง utility class ตายตัว
+ * ใส่ `inline` แล้ว utility จะ compile ออกมาเป็น var(--ds-background) ตรงๆ
+ * นี่คือเหตุผลเดียวที่สลับ skin/โหมดที่ runtime ได้โดยไม่ต้อง rebuild
+ */
+
+/* ── โหมดสว่าง (ค่าตั้งต้น) ─────────────────────────────────────────────── */
+:root {
+  --ds-brand-500: var(--skin-brand-500-light);
+  --ds-brand-600: var(--skin-brand-600-light);
+  --ds-brand-subtle: var(--skin-brand-subtle-light);
+  --ds-background: var(--skin-background-light);
+  --ds-foreground: var(--skin-foreground-light);
+  --ds-card: var(--skin-card-light);
+  --ds-muted: var(--skin-muted-light);
+  --ds-border: var(--skin-border-light);
+  --ds-on-brand: var(--skin-on-brand-light);
+  --ds-ring: var(--skin-ring-light);
+  --ds-success: var(--skin-success-light);
+  --ds-success-subtle: var(--skin-success-subtle-light);
+  --ds-danger: var(--skin-danger-light);
+  --ds-danger-subtle: var(--skin-danger-subtle-light);
+  --ds-warning: var(--skin-warning-light);
+  --ds-warning-subtle: var(--skin-warning-subtle-light);
+
+  /* token รูปทรง — ไม่ขึ้นกับโหมดและไม่ขึ้นกับ skin */
+  --ds-radius-control: 0.5rem;
+  --ds-radius-card: 0.75rem;
+  --ds-radius-pill: 9999px;
+  --ds-shadow-card: 0 1px 2px 0 oklch(0 0 0 / 0.06);
+  --ds-shadow-lift: 0 4px 12px -2px oklch(0 0 0 / 0.1);
+}
+
+/*
+ * โหมด "ตามระบบ" = ไม่มี attribute data-theme เลย
+ * :not([data-theme="light"]) กันไว้ให้คนที่เลือก "สว่าง" ค้างไว้ไม่โดนกลืนตอน OS เป็น dark
+ * จึงไม่ต้องเขียนบล็อก [data-theme="light"] แยกต่างหาก
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ds-brand-500: var(--skin-brand-500-dark);
+    --ds-brand-600: var(--skin-brand-600-dark);
+    --ds-brand-subtle: var(--skin-brand-subtle-dark);
+    --ds-background: var(--skin-background-dark);
+    --ds-foreground: var(--skin-foreground-dark);
+    --ds-card: var(--skin-card-dark);
+    --ds-muted: var(--skin-muted-dark);
+    --ds-border: var(--skin-border-dark);
+    --ds-on-brand: var(--skin-on-brand-dark);
+    --ds-ring: var(--skin-ring-dark);
+    --ds-success: var(--skin-success-dark);
+    --ds-success-subtle: var(--skin-success-subtle-dark);
+    --ds-danger: var(--skin-danger-dark);
+    --ds-danger-subtle: var(--skin-danger-subtle-dark);
+    --ds-warning: var(--skin-warning-dark);
+    --ds-warning-subtle: var(--skin-warning-subtle-dark);
+  }
+}
+
+/*
+ * ผู้ใช้เลือก "มืด" ตรงๆ — ต้องอยู่ "หลัง" บล็อก @media เสมอ (specificity เท่ากันที่ 0,2,0 ตัวหลังชนะ)
+ * ค่าซ้ำกับข้างบนโดยตั้งใจ: CSS รวม selector ข้าม @media ไม่ได้ ทำได้แค่เขียนซ้ำ
+ * แก้ที่นึงแล้วอย่าลืมแก้อีกที่
+ */
+:root[data-theme="dark"] {
+  --ds-brand-500: var(--skin-brand-500-dark);
+  --ds-brand-600: var(--skin-brand-600-dark);
+  --ds-brand-subtle: var(--skin-brand-subtle-dark);
+  --ds-background: var(--skin-background-dark);
+  --ds-foreground: var(--skin-foreground-dark);
+  --ds-card: var(--skin-card-dark);
+  --ds-muted: var(--skin-muted-dark);
+  --ds-border: var(--skin-border-dark);
+  --ds-on-brand: var(--skin-on-brand-dark);
+  --ds-ring: var(--skin-ring-dark);
+  --ds-success: var(--skin-success-dark);
+  --ds-success-subtle: var(--skin-success-subtle-dark);
+  --ds-danger: var(--skin-danger-dark);
+  --ds-danger-subtle: var(--skin-danger-subtle-dark);
+  --ds-warning: var(--skin-warning-dark);
+  --ds-warning-subtle: var(--skin-warning-subtle-dark);
+}
+
+/* ── ชั้นที่ 3: สะพานไป Tailwind ────────────────────────────────────────── */
+@theme inline {
+  --color-brand-500: var(--ds-brand-500);
+  --color-brand-600: var(--ds-brand-600);
+  --color-brand-subtle: var(--ds-brand-subtle);
+  --color-background: var(--ds-background);
+  --color-foreground: var(--ds-foreground);
+  --color-card: var(--ds-card);
+  --color-muted: var(--ds-muted);
+  --color-border: var(--ds-border);
+  --color-on-brand: var(--ds-on-brand);
+  --color-ring: var(--ds-ring);
+  --color-success: var(--ds-success);
+  --color-success-subtle: var(--ds-success-subtle);
+  --color-danger: var(--ds-danger);
+  --color-danger-subtle: var(--ds-danger-subtle);
+  --color-warning: var(--ds-warning);
+  --color-warning-subtle: var(--ds-warning-subtle);
+
+  --radius-control: var(--ds-radius-control);
+  --radius-card: var(--ds-radius-card);
+  --radius-pill: var(--ds-radius-pill);
+
+  --shadow-card: var(--ds-shadow-card);
+  --shadow-lift: var(--ds-shadow-lift);
+}
