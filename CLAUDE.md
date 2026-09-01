@@ -51,16 +51,58 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
 
 - **ห้าม hardcode** hex color, ขนาด px ลอยๆ, arbitrary Tailwind value (`bg-[#1234ab]`, `text-[13px]`)
   และ **ห้ามใช้ Tailwind named color** (`text-red-600`, `bg-green-500`) เพราะไม่เปลี่ยนตาม skin/โหมด
-  — ข้อยกเว้นเดียวคือ layout/grid ที่คำนวณแบบ dynamic (เช่น `gridColumn`/`gridRow` ใน `CalendarGrid`)
-- สี: `bg-background`, `text-foreground`, `bg-card`, `text-muted`, `border-border`,
+  — ข้อยกเว้นเดียวคือ **layout ที่คำนวณแบบ dynamic**: `gridColumn`/`gridRow` ใน `CalendarGrid`
+    และ `top`/`left`/`minWidth` ที่คำนวณจาก `getBoundingClientRect()` ใน `use-anchored-position.ts`
+    (สี/spacing/typography ยังห้าม inline เด็ดขาด)
+- สี: `bg-background`, `text-foreground`, `bg-card`, `bg-card-raised`, `bg-overlay`, `text-muted`, `border-border`,
   `bg-brand-500`, `bg-brand-600` (hover), `bg-brand-subtle`, `text-on-brand`, `ring-ring`,
   `text-success` / `bg-success-subtle`, `text-danger` / `bg-danger-subtle`, `text-warning` / `bg-warning-subtle`
-- รูปทรง: `rounded-control`, `rounded-card`, `rounded-pill`, `shadow-card`, `shadow-lift`
-- Component class: `.card`, `.card-flat`, `.card.lift`, `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`,
-  `.badge`, `.badge-success`, `.badge-danger`, `.badge-warning`, `.input`, `.select`, `.field-label`, `.form-error`
+  - `card-raised` = พื้นที่ลอย**เหนือ** `.card` (popover/listbox/modal/toast) ห้ามใช้ `bg-card` แทนเพราะจะกลืนกัน
+  - `overlay` = ฉากหลังของ Modal ห้ามใช้ `bg-foreground/50` แทน เพราะ foreground สลับขาว-ดำตามโหมด
+- รูปทรง: `rounded-tight`, `rounded-control`, `rounded-card`, `rounded-pill`,
+  `shadow-card`, `shadow-lift`, `shadow-overlay`
+- **z-index กับ duration ใช้ Tailwind utility ไม่ได้** — v4 ไม่มี namespace `--z-index-*` / `--duration-*`
+  และ `z-(--var)` คือ arbitrary syntax ที่ห้ามใช้ ต้องเขียน CSS ดิบในคลาสของ `index.css` เท่านั้น:
+  `z-index: var(--ds-z-popover);` (มี `--ds-z-popover: 50`, `--ds-z-modal: 60`, `--ds-z-toast: 70`)
 - ต้องการ class ใหม่ → เพิ่มใน `src/styles/index.css` ก่อนแล้วค่อยใช้ ห้าม inline style สำหรับสี/spacing/typography
   - ถ้าคลาสนั้นจะถูก `@apply` ต่อในคลาสอื่น ต้องประกาศเป็น `@utility` ไม่ใช่ `@layer components`
     (Tailwind v4 `@apply` คลาสใน `@layer components` ไม่ได้)
+  - `peer-*` ใช้ได้กับ sibling ตรงเท่านั้น ไม่ทะลุถึงลูก ถ้าต้องจัดสไตล์ลูกตามสถานะ input
+    ให้เขียน selector เต็ม เช่น `.peer:checked ~ .switch-track .switch-thumb`
+
+### Component library — `src/components/ui/`
+
+ห้ามใช้ component library ภายนอก (Radix / Headless UI ฯลฯ) ทุกตัวเขียนเอง
+
+- **เส้นแบ่งว่าเมื่อไหร่ custom เต็ม เมื่อไหร่ห่อ native**
+  - `Select` / `DatePicker` / `TimePicker` = custom เต็ม เพราะ native `<select>` และ `type="date"`/`type="time"`
+    สไตล์ไม่ได้จริง — ทุกตัว**ต้องมี `<input type="hidden" name=...>` ข้างใน** เพื่อให้ `FormData` ยังทำงานเหมือนเดิม
+  - `Checkbox` / `Radio` / `Switch` / `SegmentedControl` = ห่อ native `<input>` ที่ซ่อนด้วย `sr-only` + `peer`
+    ได้ a11y, keyboard, `form.reset()`, autofill และ native validation มาฟรี **ห้ามเขียนเป็น `role="checkbox"` เอง**
+- ⚠️ **custom `Select` ไม่มี native `required` validation** — hidden input ไม่เข้าร่วม constraint validation
+  ของเบราว์เซอร์ `required` เป็นแค่ ARIA ต้อง validate ฝั่ง server เสมอ (Zod ใน `booking.actions.ts`)
+- **ไม่มี barrel export** ใน `ui/` — import ลึกตรงๆ (`@/components/ui/Button`) ยกเว้น `types.ts` ที่มีแต่ type
+  barrel ที่ปนไฟล์ `"use client"` กับไฟล์ธรรมดาจะลาก client bundle ติดไปทั้งกอ้อนโดยไม่ตั้งใจ
+- **helper module ห้ามใส่ `"use client"`** (`cx.ts`, `types.ts`, `date-utils.ts`, `time-utils.ts`,
+  `Icons.tsx`, `Spinner.tsx`, `Button.tsx`) เพราะ Server Component อย่าง `CalendarGrid` ต้อง import ได้
+- ค่าคงที่เวลาทำการ (`OPEN_HOUR` / `CLOSE_HOUR` / `SLOT_MINUTES`) อยู่ที่ `ui/time-utils.ts` ที่เดียว
+  ห้ามประกาศซ้ำในไฟล์อื่น
+
+### วันที่และเวลา
+
+- **ห้ามใช้ `toISOString()` คำนวณวันที่** — มันแปลงเป็น UTC ที่ไทย (+07:00) หลังห้าทุ่มจะได้วันที่ผิดไปหนึ่งวัน
+  แบบเงียบๆ ให้ใช้ `toISODate()` / `todayISO()` / `addDays()` จาก `ui/date-utils.ts` แทนเสมอ
+- **เก็บและส่งเป็น ค.ศ. `YYYY-MM-DD` เสมอ แสดงผลเป็น พ.ศ. เท่านั้น** — `toBuddhistYear()` ถูกเรียกได้
+  เฉพาะใน `formatThai*` เท่านั้น ห้ามให้ปี พ.ศ. ข้าม function boundary ออกไป ไม่งั้นจะได้ record
+  ที่ล้ำอนาคต 543 ปีโดยไม่มี error ให้เห็น
+- **ห้ามใช้ `Intl.DateTimeFormat` ในข้อความที่ถูก SSR** — ICU ของ Node กับของ browser คนละเวอร์ชันกันได้
+  ทำให้เกิด hydration mismatch เงียบๆ ใช้ `THAI_MONTHS` / `THAI_WEEKDAYS_SHORT` ที่เขียนไว้เองแทน
+
+### ตรวจงาน UI
+
+- `/styleguide` (dev เท่านั้น) รวม component ทุกตัวทุกสถานะไว้หน้าเดียว สลับ skin/โหมดตรวจได้ทันที
+- ชื่อ field ใน `FormData` ของฟอร์มจอง (`roomId`, `title`, `date`, `startTime`, `endTime`)
+  เป็นสัญญากับ `booking.actions.ts` — component ต้องปรับตัวเข้าหา ห้ามแก้ฝั่ง action
 
 ### การสลับธีม
 
