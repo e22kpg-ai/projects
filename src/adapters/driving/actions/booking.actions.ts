@@ -12,6 +12,9 @@ const bookingFormSchema = z.object({
   date: z.string().min(1, "กรุณาเลือกวันที่"),
   startTime: z.string().min(1, "กรุณาเลือกเวลาเริ่มต้น"),
   endTime: z.string().min(1, "กรุณาเลือกเวลาสิ้นสุด"),
+  department: z.string().min(1, "กรุณาระบุหน่วยงานรับผิดชอบ"),
+  chairperson: z.string().min(1, "กรุณาระบุชื่อประธานการประชุม"),
+  dressCode: z.enum(["long_sleeve_uniform", "duty_uniform", "unspecified"]),
 });
 
 function combineDateAndTime(date: string, time: string): Date {
@@ -37,13 +40,17 @@ export async function createBookingAction(
     date: formData.get("date"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
+    department: formData.get("department"),
+    chairperson: formData.get("chairperson"),
+    dressCode: formData.get("dressCode"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   }
 
-  const { roomId, title, date, startTime, endTime } = parsed.data;
+  const { roomId, title, date, startTime, endTime, department, chairperson, dressCode } =
+    parsed.data;
 
   try {
     await container.createBooking({
@@ -52,6 +59,9 @@ export async function createBookingAction(
       title,
       startTime: combineDateAndTime(date, startTime),
       endTime: combineDateAndTime(date, endTime),
+      department,
+      chairperson,
+      dressCode,
     });
   } catch (err) {
     if (err instanceof DomainError) {

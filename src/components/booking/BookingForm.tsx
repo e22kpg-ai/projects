@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Field } from "@/components/ui/Field";
 import { ClockIcon } from "@/components/ui/Icons";
+import { Radio, RadioGroup } from "@/components/ui/RadioGroup";
 import { TextInput } from "@/components/ui/TextInput";
 import { TimePicker } from "@/components/ui/TimePicker";
 import { addMinutesClamped, formatDuration, minutesBetween } from "@/components/ui/time-utils";
 import { todayISO } from "@/components/ui/date-utils";
 import type { ISODate, TimeString } from "@/components/ui/types";
+import { DRESS_CODE_OPTIONS } from "./dress-code-options";
 
 /** ช่วงที่ถูกจองไปแล้ว แปลงเป็น string ตั้งแต่ฝั่ง server เพื่อไม่ให้ timezone เพี้ยนระหว่างทาง */
 export interface BookedSlot {
@@ -71,6 +73,22 @@ export function BookingForm({
 
       <Field label="หัวข้อการจอง" required>
         <TextInput type="text" name="title" placeholder="เช่น ประชุมทีม" required />
+      </Field>
+
+      <Field label="หน่วยงานรับผิดชอบเป็นเจ้าภาพ" required>
+        <TextInput type="text" name="department" placeholder="เช่น ฝ่ายบุคคล" required />
+      </Field>
+
+      <Field label="ชื่อประธานการประชุม" required>
+        <TextInput type="text" name="chairperson" placeholder="เช่น นายสมชาย ใจดี" required />
+      </Field>
+
+      <Field label="การแต่งกาย" required>
+        <RadioGroup name="dressCode" defaultValue="unspecified">
+          {DRESS_CODE_OPTIONS.map((option) => (
+            <Radio key={option.value} value={option.value} label={option.label} />
+          ))}
+        </RadioGroup>
       </Field>
 
       <Field label="วันที่" required>
