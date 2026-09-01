@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/adapters/driven/better-auth/auth-client";
 import { DEV_USER_PASSWORD } from "@/adapters/driven/better-auth/dev-user";
+import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { TextInput } from "@/components/ui/TextInput";
 
 export function SignupForm() {
   const router = useRouter();
@@ -53,57 +58,43 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card w-full max-w-sm flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold">สมัครสมาชิก</h1>
+    <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold">สมัครสมาชิก</h1>
         <p className="text-muted text-sm">สร้างบัญชีเพื่อเริ่มจองห้องประชุม</p>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
-        ชื่อ
-        <input className="input" type="text" name="name" required autoComplete="name" />
-      </label>
+      <Field label="ชื่อ" required>
+        <TextInput type="text" name="name" autoComplete="name" required />
+      </Field>
 
-      <label className="flex flex-col gap-1 text-sm">
-        อีเมล
-        <input className="input" type="email" name="email" required autoComplete="email" />
-      </label>
+      <Field label="อีเมล" required>
+        <TextInput type="email" name="email" autoComplete="email" required />
+      </Field>
 
-      <label className="flex flex-col gap-1 text-sm">
-        รหัสผ่าน
-        <input
-          className="input"
-          type="password"
-          name="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-        />
-      </label>
+      {/* เดิม minLength={8} ไม่ถูกบอกผู้ใช้เลย จนกด submit แล้วเบราว์เซอร์ค่อยเตือน */}
+      <Field label="รหัสผ่าน" hint="อย่างน้อย 8 ตัวอักษร" required>
+        <PasswordInput name="password" autoComplete="new-password" minLength={8} required />
+      </Field>
 
-      {error && <p className="form-error">{error}</p>}
+      {error && <Alert>{error}</Alert>}
 
-      <button className="btn-primary" type="submit" disabled={pending}>
+      <Button type="submit" loading={pending} fullWidth>
         {pending ? "กำลังสมัคร..." : "สมัครสมาชิก"}
-      </button>
+      </Button>
 
       {process.env.NODE_ENV !== "production" && (
         <>
           <p className="text-muted text-sm text-center">— หรือ (เฉพาะ dev) —</p>
-          <button
-            className="btn-secondary"
-            type="button"
-            disabled={pending}
-            onClick={handleDevSignup}
-          >
+          <Button variant="secondary" disabled={pending} onClick={handleDevSignup} fullWidth>
             สมัครบัญชีทดสอบใหม่ทันที (Dev)
-          </button>
+          </Button>
         </>
       )}
 
       <p className="text-muted text-sm">
         มีบัญชีอยู่แล้ว?{" "}
-        <Link href="/login" className="underline">
+        <Link href="/login" className="link">
           เข้าสู่ระบบ
         </Link>
       </p>
