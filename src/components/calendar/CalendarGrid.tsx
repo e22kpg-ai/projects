@@ -119,6 +119,9 @@ export function CalendarGrid({
               roomName={rooms[roomIndex].name}
               startLabel={formatTimeOfDay(booking.startTime)}
               endLabel={formatTimeOfDay(booking.endTime)}
+              department={booking.department}
+              chairperson={booking.chairperson}
+              dressCode={booking.dressCode}
               gridColumn={roomIndex + 2}
               gridRow={`${rowStart} / ${rowEnd}`}
             />
