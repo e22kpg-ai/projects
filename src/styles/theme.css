@@ -18,6 +18,8 @@
   --ds-background: var(--skin-background-light);
   --ds-foreground: var(--skin-foreground-light);
   --ds-card: var(--skin-card-light);
+  --ds-card-raised: var(--skin-card-raised-light);
+  --ds-overlay: var(--skin-overlay-light);
   --ds-muted: var(--skin-muted-light);
   --ds-border: var(--skin-border-light);
   --ds-on-brand: var(--skin-on-brand-light);
@@ -30,11 +32,23 @@
   --ds-warning-subtle: var(--skin-warning-subtle-light);
 
   /* token รูปทรง — ไม่ขึ้นกับโหมดและไม่ขึ้นกับ skin */
+  --ds-radius-tight: 0.25rem;
   --ds-radius-control: 0.5rem;
   --ds-radius-card: 0.75rem;
   --ds-radius-pill: 9999px;
   --ds-shadow-card: 0 1px 2px 0 oklch(0 0 0 / 0.06);
   --ds-shadow-lift: 0 4px 12px -2px oklch(0 0 0 / 0.1);
+  --ds-shadow-overlay: 0 12px 32px -8px oklch(0 0 0 / 0.28);
+
+  /*
+   * z-index กับ duration ไม่มี namespace ใน Tailwind v4 (ไม่มี --z-index-* / --duration-*)
+   * จึง map เข้า @theme inline ไม่ได้ ต้องเขียนเป็น CSS ดิบในคลาสของ index.css เท่านั้น
+   * เช่น  z-index: var(--ds-z-popover);
+   */
+  --ds-z-popover: 50;
+  --ds-z-modal: 60;
+  --ds-z-toast: 70;
+  --ds-duration-fast: 120ms;
 }
 
 /*
@@ -50,6 +64,8 @@
     --ds-background: var(--skin-background-dark);
     --ds-foreground: var(--skin-foreground-dark);
     --ds-card: var(--skin-card-dark);
+    --ds-card-raised: var(--skin-card-raised-dark);
+    --ds-overlay: var(--skin-overlay-dark);
     --ds-muted: var(--skin-muted-dark);
     --ds-border: var(--skin-border-dark);
     --ds-on-brand: var(--skin-on-brand-dark);
@@ -75,6 +91,8 @@
   --ds-background: var(--skin-background-dark);
   --ds-foreground: var(--skin-foreground-dark);
   --ds-card: var(--skin-card-dark);
+  --ds-card-raised: var(--skin-card-raised-dark);
+  --ds-overlay: var(--skin-overlay-dark);
   --ds-muted: var(--skin-muted-dark);
   --ds-border: var(--skin-border-dark);
   --ds-on-brand: var(--skin-on-brand-dark);
@@ -95,6 +113,8 @@
   --color-background: var(--ds-background);
   --color-foreground: var(--ds-foreground);
   --color-card: var(--ds-card);
+  --color-card-raised: var(--ds-card-raised);
+  --color-overlay: var(--ds-overlay);
   --color-muted: var(--ds-muted);
   --color-border: var(--ds-border);
   --color-on-brand: var(--ds-on-brand);
@@ -106,10 +126,15 @@
   --color-warning: var(--ds-warning);
   --color-warning-subtle: var(--ds-warning-subtle);
 
+  --radius-tight: var(--ds-radius-tight);
   --radius-control: var(--ds-radius-control);
   --radius-card: var(--ds-radius-card);
   --radius-pill: var(--ds-radius-pill);
 
   --shadow-card: var(--ds-shadow-card);
   --shadow-lift: var(--ds-shadow-lift);
+  --shadow-overlay: var(--ds-shadow-overlay);
+
+  --font-sans: var(--font-thai), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }

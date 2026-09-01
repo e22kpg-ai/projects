@@ -1,6 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Select } from "@/components/ui/Select";
 import { MODES, SKINS, type Mode, type Skin } from "./theme-config";
 import { useThemeStore } from "./theme-store";
 
@@ -17,6 +19,9 @@ function useThemeHydrated(): boolean {
   );
 }
 
+const SKIN_OPTIONS = SKINS.map((s) => ({ value: s.id, label: s.label }));
+const MODE_OPTIONS = MODES.map((m) => ({ value: m.id, label: m.label }));
+
 export function ThemeSwitcher() {
   const hydrated = useThemeHydrated();
   const skin = useThemeStore((state) => state.skin);
@@ -24,42 +29,33 @@ export function ThemeSwitcher() {
   const setSkin = useThemeStore((state) => state.setSkin);
   const setMode = useThemeStore((state) => state.setMode);
 
-  // กันที่ไว้ด้วยกล่องเปล่าขนาดเท่ากัน เพื่อไม่ให้ navbar ขยับตอนของจริงโผล่
-  if (!hydrated) {
-    return <div className="h-9 w-64" aria-hidden />;
-  }
-
+  /*
+   * เดิมกันที่ด้วยกล่องเปล่า h-9 w-64 ซึ่งเป็นเลขที่ต้องมาไล่แก้เองทุกครั้งที่ control เปลี่ยนขนาด
+   * เปลี่ยนมาเรนเดอร์ของจริงแล้วซ่อนด้วย invisible แทน — ขนาดตรงกันเป๊ะโดยอัตโนมัติ
+   * (ยังเป็น markup ชุดเดียวกับที่ server render ทุกประการ จึงไม่มี mismatch)
+   */
   return (
-    <div className="flex items-center gap-2">
-      <label className="sr-only" htmlFor="skin-select">
-        ธีมสี
-      </label>
-      <select
-        id="skin-select"
-        className="select w-32"
+    <div
+      className={hydrated ? "flex items-center gap-2" : "flex items-center gap-2 invisible"}
+      aria-hidden={hydrated ? undefined : true}
+      inert={!hydrated}
+    >
+      <Select
+        options={SKIN_OPTIONS}
         value={skin}
-        onChange={(event) => setSkin(event.target.value as Skin)}
-      >
-        {SKINS.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        onValueChange={(next) => setSkin(next as Skin)}
+        aria-label="ธีมสี"
+        size="sm"
+        className="w-36"
+      />
 
-      <div className="flex items-center gap-1" role="group" aria-label="โหมดสีจอ">
-        {MODES.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            className="btn-ghost px-2 text-xs"
-            aria-pressed={mode === option.id}
-            onClick={() => setMode(option.id as Mode)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        name="theme-mode"
+        options={MODE_OPTIONS}
+        value={mode}
+        onValueChange={(next) => setMode(next as Mode)}
+        aria-label="โหมดสีจอ"
+      />
     </div>
   );
 }

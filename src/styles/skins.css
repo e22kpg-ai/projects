@@ -19,6 +19,8 @@
   --skin-background-light: oklch(1 0 0);
   --skin-foreground-light: oklch(0.15 0 0);
   --skin-card-light: oklch(0.98 0 0);
+  --skin-card-raised-light: oklch(1 0 0);
+  --skin-overlay-light: oklch(0.15 0 0 / 0.45);
   --skin-muted-light: oklch(0.55 0 0);
   --skin-border-light: oklch(0.9 0 0);
   --skin-on-brand-light: oklch(1 0 0);
@@ -36,6 +38,8 @@
   --skin-background-dark: oklch(0.16 0 0);
   --skin-foreground-dark: oklch(0.95 0 0);
   --skin-card-dark: oklch(0.22 0 0);
+  --skin-card-raised-dark: oklch(0.27 0 0);
+  --skin-overlay-dark: oklch(0.05 0 0 / 0.65);
   --skin-muted-dark: oklch(0.68 0 0);
   --skin-border-dark: oklch(0.3 0 0);
   --skin-on-brand-dark: oklch(0.15 0.02 250);
@@ -56,6 +60,8 @@
   --skin-background-light: oklch(0.99 0.006 150);
   --skin-foreground-light: oklch(0.17 0.012 150);
   --skin-card-light: oklch(0.975 0.008 150);
+  --skin-card-raised-light: oklch(1 0.004 150);
+  --skin-overlay-light: oklch(0.17 0.012 150 / 0.45);
   --skin-muted-light: oklch(0.52 0.015 150);
   --skin-border-light: oklch(0.89 0.012 150);
   --skin-on-brand-light: oklch(1 0 0);
@@ -73,6 +79,8 @@
   --skin-background-dark: oklch(0.15 0.012 150);
   --skin-foreground-dark: oklch(0.95 0.006 150);
   --skin-card-dark: oklch(0.21 0.014 150);
+  --skin-card-raised-dark: oklch(0.26 0.014 150);
+  --skin-overlay-dark: oklch(0.05 0.01 150 / 0.7);
   --skin-muted-dark: oklch(0.68 0.014 150);
   --skin-border-dark: oklch(0.3 0.016 150);
   --skin-on-brand-dark: oklch(0.16 0.03 155);

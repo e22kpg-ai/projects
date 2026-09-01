@@ -3,7 +3,9 @@
 @import "./theme.css";
 
 body {
-  @apply bg-background text-foreground;
+  @apply bg-background text-foreground font-sans;
+  /* ภาษาไทยมีสระบนกับวรรณยุกต์ซ้อนกันสองชั้น line-height ระดับ latin จะทำให้ตัวชนกัน */
+  line-height: 1.7;
 }
 
 /*
@@ -11,13 +13,25 @@ body {
  * เพราะ Tailwind v4 @apply คลาสที่อยู่ใน @layer components ไม่ได้
  */
 @utility btn {
-  @apply inline-flex items-center justify-center rounded-control px-4 py-2 text-sm font-medium transition-colors;
+  @apply inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-colors;
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   @apply disabled:opacity-50 disabled:pointer-events-none;
 }
 
+/*
+ * ห้ามถอด padding ออกจาก btn เพื่อมาใส่ใน size แยก เพราะทุก call site เดิมใช้ .btn-primary เปล่าๆ อยู่
+ * btn-sm/btn-lg ประกาศเป็น @utility จึงตกอยู่ layer utilities ซึ่งมาหลัง components
+ * เขียน class="btn-primary btn-sm" แล้วตัว size ชนะเองโดยไม่ต้อง !important
+ */
+@utility btn-sm {
+  @apply px-3 py-1 text-xs;
+}
+@utility btn-lg {
+  @apply px-5 py-2.5 text-base;
+}
+
 @utility badge {
-  @apply inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium bg-muted/15 text-muted;
+  @apply inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-xs font-medium bg-muted/15 text-muted;
 }
 
 @utility input {
@@ -25,7 +39,47 @@ body {
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring;
 }
 
+/* กล่องห่อ input ที่มีไอคอนหรือปุ่มอยู่ข้างใน (เช่น ช่องรหัสผ่านที่มีปุ่มดู/ซ่อน) */
+@utility input-affix {
+  @apply flex w-full items-center gap-2 rounded-control border border-border bg-background px-3 text-sm text-foreground;
+  @apply has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring;
+}
+
+/* กล่องสี่เหลี่ยมของ checkbox/radio ที่วาดเอง — native input ซ่อนเป็น peer อยู่ข้างๆ */
+@utility control-box {
+  @apply grid size-4 shrink-0 place-items-center border border-border bg-background transition-colors;
+  @apply peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-on-brand;
+  @apply peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background;
+  @apply peer-disabled:opacity-50;
+}
+
+/* กล่องแจ้งเตือนระดับฟอร์ม/หน้า — ต่างจาก .form-error ที่ผูกกับ field เดียว */
+@utility alert {
+  @apply flex items-start gap-2 rounded-control px-3 py-2 text-sm;
+}
+
+/*
+ * ตำแหน่งเริ่มต้นของชั้นลอยที่เกาะกับ trigger
+ * use-anchored-position.ts จะวัดแล้วเขียน top/left/visibility ทับก่อน paint
+ * เริ่มที่ visibility: hidden เพื่อไม่ให้เห็นเฟรมแรกที่ยังอยู่ผิดตำแหน่ง
+ */
+@utility anchored {
+  position: fixed;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+}
+
+/* พื้นลอยทุกชนิด: listbox ของ Select, ปฏิทินของ DatePicker, Toast, Tooltip */
+@utility popover {
+  @apply overflow-hidden rounded-card border border-border bg-card-raised shadow-overlay;
+  /* Tailwind v4 ไม่มี namespace --z-index-* / --duration-* จึงต้องเขียน CSS ดิบตรงนี้ */
+  z-index: var(--ds-z-popover);
+  transition-duration: var(--ds-duration-fast);
+}
+
 @layer components {
+  /* ── พื้นผิว ────────────────────────────────────────────────── */
   .card {
     @apply bg-card border border-border rounded-card p-4;
   }
@@ -33,12 +87,13 @@ body {
     @apply bg-card rounded-card p-4;
   }
   .card.lift {
-    @apply shadow-card;
+    @apply shadow-card transition-shadow;
   }
   .card.lift:hover {
     @apply shadow-lift;
   }
 
+  /* ── ปุ่ม ───────────────────────────────────────────────────── */
   .btn-primary {
     @apply btn bg-brand-500 text-on-brand hover:bg-brand-600;
   }
@@ -48,11 +103,30 @@ body {
   .btn-ghost {
     @apply btn bg-transparent text-muted hover:bg-muted/10 hover:text-foreground;
   }
-  /* ปุ่มตัวเลือกที่กำลังถูกเลือกอยู่ เช่น ตัวเลือกโหมดใน ThemeSwitcher */
+  .btn-danger {
+    @apply btn bg-danger text-on-brand hover:opacity-90;
+  }
+  /* ปุ่มตัวเลือกที่กำลังถูกเลือกอยู่ เช่น toggle button ทั่วไป */
   .btn-ghost[aria-pressed="true"] {
     @apply bg-brand-subtle text-brand-500;
   }
+  /* ปุ่มไอคอนล้วน — สี่เหลี่ยมจัตุรัส ไม่มี padding แนวนอนส่วนเกิน */
+  .btn-icon {
+    @apply size-9 p-0;
+  }
+  .btn-spinner {
+    @apply size-4 shrink-0 animate-spin;
+  }
+  /* <Link> ใส่ disabled ไม่ได้ ต้องกันการกดด้วย CSS แทน */
+  .btn-link-disabled {
+    @apply pointer-events-none opacity-50;
+  }
+  .link {
+    @apply text-brand-500 underline underline-offset-2 hover:text-brand-600;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-tight;
+  }
 
+  /* ── ป้ายสถานะ ──────────────────────────────────────────────── */
   .badge-success {
     @apply badge bg-success-subtle text-success;
   }
@@ -62,15 +136,282 @@ body {
   .badge-warning {
     @apply badge bg-warning-subtle text-warning;
   }
-
-  .select {
-    @apply input appearance-none bg-card pr-8;
+  /* จุดกลมหน้าป้าย ใช้กับ badge ที่สื่อสถานะเปิด/ปิด */
+  .badge-dot::before {
+    @apply size-1.5 rounded-pill bg-current;
+    content: "";
   }
 
+  /* ── กล่องแจ้งเตือน ─────────────────────────────────────────── */
+  .alert-danger {
+    @apply alert bg-danger-subtle text-danger;
+  }
+  .alert-success {
+    @apply alert bg-success-subtle text-success;
+  }
+  .alert-warning {
+    @apply alert bg-warning-subtle text-warning;
+  }
+  .alert-info {
+    @apply alert bg-brand-subtle text-brand-500;
+  }
+  .alert-icon {
+    @apply mt-0.5 size-4 shrink-0;
+  }
+
+  /* ── ฟิลด์ในฟอร์ม ───────────────────────────────────────────── */
+  .field {
+    @apply flex flex-col gap-1;
+  }
   .field-label {
-    @apply block text-sm font-medium text-foreground mb-1;
+    @apply block text-sm font-medium text-foreground;
+  }
+  .field-required {
+    @apply ml-0.5 text-danger;
+  }
+  .field-hint {
+    @apply text-xs text-muted;
   }
   .form-error {
     @apply text-sm text-danger;
+  }
+  /*
+   * <p class="form-error"> ถูก render ทิ้งไว้เสมอเพื่อให้ aria-live ทำงานเชื่อถือได้
+   * (node ที่เพิ่ง mount ตอน submit เสร็จ screen reader อ่านไม่สม่ำเสมอ) — ว่างเมื่อไหร่ก็ซ่อนเอง
+   */
+  .form-error:empty {
+    @apply hidden;
+  }
+
+  /* input เปลือยที่อยู่ใน .input-affix — ขอบและ ring เป็นของกล่องนอก */
+  .input-bare {
+    @apply w-full border-0 bg-transparent py-2 text-sm text-foreground outline-none;
+    @apply placeholder:text-muted;
+  }
+  .input-affix-btn {
+    @apply -mr-1 shrink-0 rounded-control p-1 text-muted transition-colors hover:text-foreground;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .textarea {
+    @apply input min-h-20 resize-y;
+  }
+
+  /* ── Select (custom listbox) ────────────────────────────────── */
+  .select-root {
+    @apply relative inline-block w-full;
+  }
+  .select-trigger {
+    @apply input flex items-center justify-between gap-2 text-left;
+    @apply disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .select-trigger[aria-expanded="true"] {
+    @apply border-ring;
+  }
+  .select-placeholder {
+    @apply text-muted;
+  }
+  .select-chevron {
+    @apply size-4 shrink-0 text-muted transition-transform;
+  }
+  .select-trigger[aria-expanded="true"] .select-chevron {
+    @apply rotate-180;
+  }
+  .listbox {
+    @apply max-h-60 overflow-y-auto py-1;
+  }
+  .listbox-option {
+    @apply flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm text-foreground;
+  }
+  /* data-active = ตัวที่ aria-activedescendant ชี้อยู่ ไม่ใช่ตัวที่ถูกเลือก */
+  .listbox-option[data-active] {
+    @apply bg-brand-subtle text-brand-500;
+  }
+  .listbox-option[aria-selected="true"] {
+    @apply font-medium;
+  }
+  .listbox-option[aria-disabled="true"] {
+    @apply pointer-events-none opacity-50;
+  }
+  .listbox-empty {
+    @apply px-3 py-6 text-center text-sm text-muted;
+  }
+
+  /* ── Checkbox / Radio / Switch ──────────────────────────────── */
+  .control-row {
+    @apply inline-flex cursor-pointer items-center gap-2 text-sm;
+    @apply has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-60;
+  }
+  .checkbox-box {
+    @apply control-box rounded-tight;
+  }
+  .radio-box {
+    @apply control-box rounded-pill;
+  }
+  /*
+   * เครื่องหมายถูก/จุดข้างใน ถูกซ่อนด้วย opacity ไม่ใช่ display
+   * กล่องจึงไม่ขยับขนาดตอนติ๊ก และได้ transition มาฟรี
+   * ต้องเขียนเป็น selector เต็มเพราะ peer-* ใช้ได้กับ sibling ตรงเท่านั้น ไม่ทะลุถึงลูก
+   */
+  .control-mark {
+    @apply opacity-0 transition-opacity;
+  }
+  .peer:checked ~ .checkbox-box .control-mark,
+  .peer:checked ~ .radio-box .control-mark {
+    @apply opacity-100;
+  }
+
+  .switch-track {
+    @apply relative h-5 w-9 shrink-0 rounded-pill bg-muted/40 transition-colors;
+    @apply peer-checked:bg-brand-500;
+    @apply peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background;
+    @apply peer-disabled:opacity-50;
+  }
+  .switch-thumb {
+    @apply absolute left-0.5 top-0.5 size-4 rounded-pill bg-background transition-transform;
+  }
+  .peer:checked ~ .switch-track .switch-thumb {
+    @apply translate-x-4;
+  }
+
+  /* ── SegmentedControl (native radio ซ่อนอยู่ข้างใน) ──────────── */
+  .segmented {
+    @apply inline-flex items-center gap-1 rounded-pill border border-border bg-card p-1;
+  }
+  .segment-label {
+    @apply inline-flex cursor-pointer items-center rounded-pill px-3 py-1 text-xs font-medium text-muted transition-colors;
+    @apply hover:text-foreground;
+    @apply peer-checked:bg-brand-subtle peer-checked:text-brand-500;
+    @apply peer-focus-visible:ring-2 peer-focus-visible:ring-ring;
+  }
+
+  /* ── ชิปตัวเลือกเร็ว เช่น ระยะเวลาการจอง ────────────────────── */
+  .chip {
+    @apply inline-flex items-center rounded-pill border border-border bg-background px-3 py-1 text-xs font-medium text-muted transition-colors;
+    @apply hover:text-foreground;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .chip[aria-pressed="true"] {
+    @apply border-brand-500 bg-brand-500 text-on-brand;
+  }
+
+  /* ── DatePicker ─────────────────────────────────────────────── */
+  .calendar-popover {
+    @apply w-72 p-2;
+  }
+  .calendar-header {
+    @apply flex items-center justify-between gap-2 px-1 pb-2;
+  }
+  .calendar-title {
+    @apply text-sm font-medium;
+  }
+  .calendar-weekdays {
+    @apply grid grid-cols-7 pb-1 text-center text-xs text-muted;
+  }
+  .calendar-week {
+    @apply grid grid-cols-7;
+  }
+  .calendar-day {
+    @apply h-9 rounded-control text-sm tabular-nums transition-colors hover:bg-muted/10;
+  }
+  /* วันของเดือนก่อน/ถัดไป — ยังกดได้เพื่อให้ลูกศรเดินข้ามเดือนได้ */
+  .calendar-day[data-outside] {
+    @apply text-muted opacity-60;
+  }
+  .calendar-day[aria-current="date"] {
+    @apply font-semibold text-brand-500;
+  }
+  .calendar-day[aria-selected="true"] {
+    @apply bg-brand-500 font-medium text-on-brand hover:bg-brand-600;
+  }
+  .calendar-day:disabled {
+    @apply pointer-events-none opacity-40;
+  }
+  .calendar-day:focus-visible {
+    @apply outline-none ring-2 ring-ring;
+  }
+
+  /* ── Modal ──────────────────────────────────────────────────── */
+  .modal-layer {
+    @apply fixed inset-0 flex items-center justify-center p-4;
+    z-index: var(--ds-z-modal);
+  }
+  /*
+   * backdrop เป็น element แยก ไม่ใช่ onClick บน layer
+   * ไม่งั้นลากเลือกข้อความจากใน panel ออกมาปล่อยข้างนอก modal จะปิดทิ้งกลางคัน
+   */
+  .modal-backdrop {
+    @apply absolute inset-0 bg-overlay;
+  }
+  .modal-panel {
+    @apply relative flex max-h-full w-full flex-col gap-4 overflow-y-auto rounded-card border border-border bg-card-raised p-5 shadow-overlay;
+  }
+  .modal-sm {
+    @apply max-w-sm;
+  }
+  .modal-md {
+    @apply max-w-md;
+  }
+  .modal-lg {
+    @apply max-w-2xl;
+  }
+  .modal-header {
+    @apply flex items-start justify-between gap-4;
+  }
+  .modal-title {
+    @apply text-lg font-semibold;
+  }
+  .modal-footer {
+    @apply flex justify-end gap-2;
+  }
+
+  /* ── Toast ──────────────────────────────────────────────────── */
+  .toast-viewport {
+    @apply pointer-events-none fixed inset-x-0 bottom-0 flex flex-col items-center gap-2 p-4 sm:inset-x-auto sm:right-0 sm:items-end;
+    z-index: var(--ds-z-toast);
+  }
+  .toast {
+    @apply popover pointer-events-auto flex w-full max-w-sm items-start gap-2 p-3 text-sm;
+  }
+  .toast-icon {
+    @apply size-4 shrink-0;
+  }
+  .toast[data-variant="success"] .toast-icon {
+    @apply text-success;
+  }
+  .toast[data-variant="danger"] .toast-icon {
+    @apply text-danger;
+  }
+  .toast[data-variant="warning"] .toast-icon {
+    @apply text-warning;
+  }
+
+  /* ── Tooltip ────────────────────────────────────────────────── */
+  .tooltip {
+    @apply popover max-w-xs px-2 py-1 text-xs;
+  }
+
+  /* ── สถานะว่าง / กำลังโหลด ──────────────────────────────────── */
+  .empty-state {
+    @apply flex flex-col items-center gap-2 rounded-card border border-dashed border-border px-6 py-12 text-center;
+  }
+  .empty-state-title {
+    @apply text-sm font-medium text-foreground;
+  }
+  .empty-state-body {
+    @apply max-w-sm text-sm text-muted;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-control bg-muted/15;
+  }
+}
+
+/* คนที่ตั้งเครื่องให้ลดการเคลื่อนไหว ไม่ควรเจอ transition ใดๆ จากระบบเรา */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
