@@ -1,8 +1,13 @@
-// Generated via `npm run auth:generate-schema`, plus one manual patch: the
-// `issuer` column + unique index on `account` (better-auth 1.7's "account
-// identity is scoped by issuer" change) — the installed CLI version did not
-// emit it. Re-run the generator after upgrading better-auth and diff before
-// accepting, in case this still needs to be re-added by hand.
+// Generated via `npm run auth:generate-schema`, plus two manual patches:
+// (1) the `issuer` column + unique index on `account` (better-auth 1.7's
+// "account identity is scoped by issuer" change) — the installed CLI version
+// did not emit it.
+// (2) the `role` column on `user` — a DIY RBAC field (paired with the
+// `user.additionalFields.role` config in auth.ts), deliberately NOT using
+// better-auth's official `admin()` plugin, since that plugin would also add
+// unused `banned`/`banReason`/`banExpires`/`impersonatedBy` columns.
+// Re-run the generator after upgrading better-auth and diff before accepting,
+// in case either patch still needs to be re-added by hand.
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -14,6 +19,7 @@ export const user = sqliteTable("user", {
     .default(false)
     .notNull(),
   image: text("image"),
+  role: text("role").notNull().default("user"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),

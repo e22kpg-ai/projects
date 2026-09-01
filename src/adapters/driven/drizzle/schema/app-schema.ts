@@ -10,6 +10,11 @@ export const rooms = sqliteTable("rooms", {
   location: text("location"),
   capacity: integer("capacity").notNull(),
   description: text("description"),
+  equipment: text("equipment", { mode: "json" })
+    .notNull()
+    .default([] as string[])
+    .$type<string[]>(),
+  ownerName: text("owner_name"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -30,6 +35,11 @@ export const bookings = sqliteTable(
     title: text("title").notNull(),
     startTime: integer("start_time", { mode: "timestamp" }).notNull(),
     endTime: integer("end_time", { mode: "timestamp" }).notNull(),
+    department: text("department"),
+    chairperson: text("chairperson"),
+    dressCode: text("dress_code", {
+      enum: ["long_sleeve_uniform", "duty_uniform", "unspecified"],
+    }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),
