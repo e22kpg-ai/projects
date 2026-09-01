@@ -8,6 +8,10 @@ export async function getRoomById(id: string) {
   return container.getRoomById(id);
 }
 
+export async function getAllRoomsPlain() {
+  return container.listRoomsPlain();
+}
+
 /**
  * การจองของห้องเดียวในช่วงหลายวันข้างหน้า
  *

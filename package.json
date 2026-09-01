@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/adapters/driven/drizzle/seed.ts",
+    "db:set-admin": "tsx src/adapters/driven/drizzle/scripts/set-admin.ts",
     "auth:generate-schema": "npx @better-auth/cli generate --config src/adapters/driven/better-auth/auth.ts --output src/adapters/driven/drizzle/schema/auth-schema.ts -y"
   },
   "dependencies": {

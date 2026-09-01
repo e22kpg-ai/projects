@@ -1,0 +1,29 @@
+import { notFound, redirect } from "next/navigation";
+import { container } from "@/composition/container";
+import { UserRoleTable } from "@/components/admin/UserRoleTable";
+import { NavBar } from "@/components/layout/NavBar";
+import { Button } from "@/components/ui/Button";
+
+export default async function AdminUsersPage() {
+  const user = await container.authService.getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") notFound();
+
+  const users = await container.listUsers({ actingUser: user });
+
+  return (
+    <>
+      <NavBar />
+      <main className="max-w-5xl mx-auto w-full p-6 flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">จัดการสิทธิ์ผู้ใช้</h1>
+          <Button href="/admin/rooms" variant="secondary">
+            จัดการห้องประชุม
+          </Button>
+        </div>
+
+        <UserRoleTable users={users} currentUserId={user.id} />
+      </main>
+    </>
+  );
+}

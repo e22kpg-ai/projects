@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/components/ui/cx";
+import type { Role } from "@/core/ports/auth-service.port";
 
 /*
  * ลิงก์เมนูหลัก แยกเป็น client component ตัวเล็กๆ เพราะต้องใช้ usePathname
@@ -14,12 +15,15 @@ const LINKS = [
   { href: "/calendar", label: "ปฏิทิน" },
 ] as const;
 
-export function NavLinks() {
+const ADMIN_LINK = { href: "/admin/rooms", label: "ผู้ดูแลระบบ" } as const;
+
+export function NavLinks({ role }: { role?: Role }) {
   const pathname = usePathname();
+  const links = role === "admin" ? [...LINKS, ADMIN_LINK] : LINKS;
 
   return (
     <nav className="flex items-center gap-1" aria-label="เมนูหลัก">
-      {LINKS.map((link) => {
+      {links.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
         return (
           <Link
