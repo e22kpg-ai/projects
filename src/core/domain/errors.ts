@@ -32,3 +32,24 @@ export class UnauthenticatedError extends DomainError {
     this.name = "UnauthenticatedError";
   }
 }
+
+export class ForbiddenError extends DomainError {
+  constructor(message = "คุณไม่มีสิทธิ์ทำรายการนี้") {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
+export class InvalidRoomError extends DomainError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidRoomError";
+  }
+}
+
+export class UserNotFoundError extends DomainError {
+  constructor(userId: string) {
+    super(`ไม่พบผู้ใช้ (${userId})`);
+    this.name = "UserNotFoundError";
+  }
+}
