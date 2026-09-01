@@ -62,5 +62,9 @@ export async function createBookingAction(
 
   revalidatePath("/rooms");
   revalidatePath("/calendar");
-  redirect("/rooms");
+  /*
+   * action นี้ redirect ทันทีที่สำเร็จ ฟอร์มจึง unmount ไปก่อน — ยิง toast จากในฟอร์มไม่ทัน
+   * ส่งสัญญาณผ่าน query param แล้วให้หน้า /rooms เป็นคนแจ้งผลแทน
+   */
+  redirect("/rooms?booked=1");
 }
