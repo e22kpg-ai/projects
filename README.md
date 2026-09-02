@@ -42,6 +42,11 @@ Signing up is restricted twice over:
    and see `/pending`, but nothing else: pages redirect, and `createBooking`/`cancelBooking` reject
    them in the use-case, which is the gate that matters since Server Actions can be called directly.
 
+   `/pending` stays a real page rather than a toast on the landing page: a toast lasts seconds and
+   the wait lasts days, so someone signing in a week later would have no way to answer "what is my
+   status?". The toast answers a different question — *why am I back here* — and fires on signup and
+   on every bounce, via `?notice=` which the client clears so a refresh does not replay it.
+
 Admins approve, revoke, or reject (delete) accounts at `/admin/users`, where pending accounts are
 listed first. Nobody can change their own role or status — that would let the last admin lock
 everyone out of the page that fixes it.

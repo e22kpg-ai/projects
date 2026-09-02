@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/adapters/driving/queries/session.queries";
+import {
+  PendingNoticeToast,
+  type PendingNoticeReason,
+} from "@/components/auth/PendingNoticeToast";
 import { NavBar } from "@/components/layout/NavBar";
 
 export const metadata: Metadata = {
   title: "รอผู้ดูแลระบบอนุมัติ",
 };
+
+/* รับเฉพาะค่าที่รู้จัก ค่าที่ใครพิมพ์มั่วมาใน URL ต้องไม่ทำให้เกิด toast แปลกๆ */
+function toReason(raw: string | undefined): PendingNoticeReason | null {
+  return raw === "signedup" || raw === "blocked" ? raw : null;
+}
 
 /*
  * หน้าปลายทางของบัญชีที่สมัครแล้วแต่ยังไม่ถูกอนุมัติ
@@ -15,17 +24,27 @@ export const metadata: Metadata = {
  * ★ คนที่อนุมัติแล้วเดินมาที่นี่ให้ส่งกลับไป /rooms เพราะหน้านี้ไม่มีอะไรให้เขาทำ
  *   และถ้าปล่อยให้ค้างอยู่ เขาจะเข้าใจว่าตัวเองยังใช้งานไม่ได้ทั้งที่ใช้ได้แล้ว
  *
+ * ★ toast เป็นตัวเสริมที่ตอบว่า "ทำไมถึงมาอยู่ตรงนี้" ส่วนตัวหน้าตอบว่า "ตอนนี้อยู่สถานะไหน"
+ *   สองคำถามคนละข้อ และข้อหลังต้องตอบได้เสมอแม้ผ่านไปเป็นสัปดาห์ จึงต้องอยู่ในหน้า ไม่ใช่ใน toast
+ *
  * เป็น presentation ล้วน ไม่มี business rule — กฎว่าใครใช้ระบบได้อยู่ใน core
  */
-export default async function PendingApprovalPage() {
+export default async function PendingApprovalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const user = await requireUser();
   if (user.status === "approved") {
     redirect("/rooms");
   }
 
+  const reason = toReason((await searchParams).notice);
+
   return (
     <>
       <NavBar />
+      <PendingNoticeToast reason={reason} />
       <main className="flex-1 grid place-items-center p-6">
         <div className="card flex max-w-md flex-col gap-4">
           <div className="flex flex-col gap-1">

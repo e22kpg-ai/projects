@@ -89,8 +89,27 @@ async function main() {
 
   await signupPage.goto(`${BASE}/signup`);
   await signupPage.click("text=สมัครบัญชีทดสอบใหม่ทันที (Dev)");
-  await signupPage.waitForURL(`${BASE}/pending`, { timeout: 90000 });
+  await signupPage.waitForURL((url) => url.pathname === "/pending", { timeout: 90000 });
   ok("dev signup works and lands on /pending (new accounts start unapproved)");
+
+  /*
+   * ★ toast ยืนยันว่า "สมัครสำเร็จแล้วนะ" — จังหวะที่เคยเงียบสนิท
+   *   ผู้ใช้เคยกดสมัครแล้วโผล่มาหน้ารออนุมัติเฉยๆ โดยไม่มีอะไรบอกว่าสมัครติดหรือเปล่า
+   */
+  const signupToast = await signupPage
+    .waitForSelector("text=สมัครสมาชิกเรียบร้อยแล้ว", { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  if (signupToast) ok("a toast confirms the signup landed");
+  else fail("no toast after signup");
+
+  /*
+   * ★ query ต้องถูกลบทิ้งหลังยิง toast
+   *   ถ้าค้างไว้ กด refresh ทีก็เด้ง toast ซ้ำที และปุ่ม back พาย้อนกลับมาที่สถานะเดิม
+   */
+  await signupPage.waitForTimeout(1200);
+  if (!signupPage.url().includes("notice=")) ok("the notice query is cleared from the URL");
+  else fail(`notice query stayed in the URL: ${signupPage.url()}`);
 
   /*
    * ★ ด่านสำคัญที่สุดของฟีเจอร์อนุมัติ: คนที่ยังไม่ถูกอนุมัติต้องเข้าหน้าที่มีข้อมูลจริงไม่ได้
@@ -100,6 +119,14 @@ async function main() {
   await signupPage.waitForURL(/\/pending/, { timeout: 30000 }).catch(() => {});
   if (signupPage.url().includes("/pending")) ok("unapproved account is bounced off /rooms");
   else fail(`unapproved account reached ${signupPage.url()}`);
+
+  /* ถูกเด้งกลับมาทุกครั้งต้องมีคำอธิบาย ไม่งั้นผู้ใช้จะคิดว่าลิงก์เสียหรือระบบพัง */
+  const blockedToast = await signupPage
+    .waitForSelector("text=ยังรอการอนุมัติ", { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  if (blockedToast) ok("a toast explains why the unapproved account was bounced back");
+  else fail("no toast explaining the bounce");
 
   await signupPage.goto(`${BASE}/calendar`);
   await signupPage.waitForURL(/\/pending/, { timeout: 30000 }).catch(() => {});

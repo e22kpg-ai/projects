@@ -39,7 +39,7 @@ export function SignupForm() {
      * ถ้าส่งไป /rooms มันจะถูกเด้งต่อมาที่ /pending อยู่ดี เสียรอบไปเปล่าๆ
      * และระหว่างเด้งผู้ใช้จะเห็นหน้าห้องประชุมแวบหนึ่ง ซึ่งชวนให้เข้าใจผิดว่าใช้ได้แล้ว
      */
-    router.push("/pending");
+    router.push("/pending?notice=signedup");
     router.refresh();
   }
 
@@ -61,7 +61,7 @@ export function SignupForm() {
       setError(signUpError.message ?? "สมัครสมาชิกไม่สำเร็จ");
       return;
     }
-    router.push("/pending");
+    router.push("/pending?notice=signedup");
     router.refresh();
   }
 

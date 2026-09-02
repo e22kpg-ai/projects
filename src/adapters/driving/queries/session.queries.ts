@@ -43,7 +43,8 @@ export async function requireUser(): Promise<AuthenticatedUser> {
 export async function requireApprovedUser(): Promise<AuthenticatedUser> {
   const user = await requireUser();
   if (user.status !== "approved") {
-    redirect("/pending");
+    /* ติด ?notice=blocked ไปด้วย เพื่อให้หน้าปลายทางบอกได้ว่าทำไมถึงถูกพากลับมา */
+    redirect("/pending?notice=blocked");
   }
   return user;
 }
