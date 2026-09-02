@@ -5,14 +5,28 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { container } from "@/composition/container";
 import { DomainError } from "@/core/domain/errors";
+import { MAX_ROOM_CAPACITY } from "@/core/domain/room-rules";
+
+/*
+ * เพดานความยาวข้อความ ตัวเลขเดียวกับ TEXT_MAX ใน booking.actions.ts โดยตั้งใจ
+ * ทั้งสองฟอร์มไปโผล่ในหน้าจอชุดเดียวกัน ถ้าตั้งคนละเพดานจะได้การ์ดห้องที่พังคนละแบบ
+ *
+ * description ยาวได้กว่าเพื่อนเพราะเป็นย่อหน้าบรรยาย ไม่ใช่ป้ายชื่อที่ต้องอยู่ในบรรทัดเดียว
+ */
+const TEXT_MAX = 200;
+const DESCRIPTION_MAX = 1000;
 
 const roomFormSchema = z.object({
-  name: z.string().min(1, "กรุณาระบุชื่อห้อง"),
-  location: z.string().optional(),
-  capacity: z.coerce.number().int("ความจุต้องเป็นจำนวนเต็ม"),
-  description: z.string().optional(),
-  equipment: z.string().optional(),
-  ownerName: z.string().optional(),
+  name: z.string().min(1, "กรุณาระบุชื่อห้อง").max(TEXT_MAX, "ชื่อห้องยาวเกินไป"),
+  location: z.string().max(TEXT_MAX, "ที่ตั้งยาวเกินไป").optional(),
+  capacity: z.coerce
+    .number()
+    .int("ความจุต้องเป็นจำนวนเต็ม")
+    .min(1, "ความจุต้องมากกว่า 0")
+    .max(MAX_ROOM_CAPACITY, `ความจุต้องไม่เกิน ${MAX_ROOM_CAPACITY} คน`),
+  description: z.string().max(DESCRIPTION_MAX, "คำอธิบายยาวเกินไป").optional(),
+  equipment: z.string().max(DESCRIPTION_MAX, "รายการอุปกรณ์ยาวเกินไป").optional(),
+  ownerName: z.string().max(TEXT_MAX, "ชื่อผู้ดูแลยาวเกินไป").optional(),
 });
 
 function emptyToNull(value: string | undefined): string | null {

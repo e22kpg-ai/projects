@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ForbiddenError, InvalidRoomError, RoomNotFoundError } from "@/core/domain/errors";
+import { MAX_ROOM_CAPACITY } from "@/core/domain/room-rules";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
 import type { UserRepository } from "@/core/ports/user-repository.port";
@@ -140,6 +141,33 @@ describe("กฎเฉพาะของ use-case", () => {
         ownerName: null,
       }),
     ).rejects.toBeInstanceOf(InvalidRoomError);
+  });
+
+  /* เพดานต้องบังคับจาก core ด้วย ไม่ใช่แค่ zod ฝั่ง action — use-case ถูกเรียกจากทางอื่นได้ */
+  it("ความจุเกินเพดานต้องถูกปฏิเสธ ทั้งตอนสร้างและตอนแก้ไข", async () => {
+    const rooms = roomRepo();
+    await expect(
+      makeCreateRoom({ rooms })({
+        actingUser: admin,
+        name: "ห้องใหญ่เกินจริง",
+        location: null,
+        capacity: MAX_ROOM_CAPACITY + 1,
+        description: null,
+        equipment: [],
+        ownerName: null,
+      }),
+    ).rejects.toBeInstanceOf(InvalidRoomError);
+
+    await expect(
+      makeUpdateRoom({ rooms })({
+        roomId: "room-1",
+        actingUser: admin,
+        changes: { capacity: MAX_ROOM_CAPACITY + 1 },
+      }),
+    ).rejects.toBeInstanceOf(InvalidRoomError);
+
+    expect(rooms.create).not.toHaveBeenCalled();
+    expect(rooms.update).not.toHaveBeenCalled();
   });
 
   it("ชื่อห้องที่มีแต่ช่องว่างถือว่าไม่ได้ระบุชื่อ", async () => {

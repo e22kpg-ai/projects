@@ -1,4 +1,5 @@
 import type { NewRoom, Room } from "@/core/domain/entities/room";
+import { capacityProblem } from "@/core/domain/room-rules";
 import { ForbiddenError, InvalidRoomError } from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
@@ -16,8 +17,9 @@ export function makeCreateRoom(deps: CreateRoomDeps) {
     if (input.actingUser.role !== "admin") {
       throw new ForbiddenError();
     }
-    if (input.capacity <= 0) {
-      throw new InvalidRoomError("ความจุต้องมากกว่า 0");
+    const capacityIssue = capacityProblem(input.capacity);
+    if (capacityIssue) {
+      throw new InvalidRoomError(capacityIssue);
     }
 
     /* zod ฝั่ง action เช็คแค่ min(1) ซึ่ง "   " ผ่าน — ห้องชื่อช่องว่างล้วนจะกลายเป็นแถวว่างเปล่าในทุกหน้า */
