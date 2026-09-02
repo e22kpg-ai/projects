@@ -28,3 +28,13 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
+      # build ต้องอยู่ใน CI ด้วย ไม่ใช่แค่ lint/typecheck/test
+      #
+      # tsc ตรวจ type แต่ไม่ได้ตรวจว่า Next ประกอบร่างได้จริง เรื่องที่หลุดได้คือ
+      # การ import ข้ามฝั่ง server/client, การใช้ dynamic API ในหน้าที่ถูก prerender,
+      # และ config ที่พังเฉพาะตอน build ซึ่งทั้งหมดจะไปโผล่ตอน deploy แทน
+      #
+      # ใช้ env ชุดเดียวกับ test ด้านบนได้เลย ยืนยันแล้วว่า build ผ่านโดยไม่ต้องมี
+      # BETTER_AUTH_SECRET หรือ token จริง
+      - run: npm run build
