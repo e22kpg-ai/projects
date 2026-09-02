@@ -65,6 +65,16 @@ export function makeSummarizeRoomUsage(deps: SummarizeRoomUsageDeps) {
       throw new InvalidDateRangeError(`ขอรายงานได้ครั้งละไม่เกิน ${MAX_RANGE_DAYS} วัน`);
     }
 
+    /*
+     * ⚠️ findInRange ใช้เงื่อนไขแบบ "ทับซ้อน" (startTime < to AND endTime > from) ส่วน summarizeUsage
+     *   นับ*นาทีทั้งก้อน*ของแต่ละการจอง ไม่ได้ตัดเฉพาะส่วนที่ตกอยู่ในช่วง
+     *
+     *   ตอนนี้ยังไม่มีปัญหา เพราะการจองข้ามเที่ยงคืนไม่ได้ (OPEN_HOUR/CLOSE_HOUR บังคับให้จบภายในวัน)
+     *   จึงไม่มีการจองไหนคร่อมขอบช่วงได้เลย
+     *
+     *   ★ แต่ถ้าวันหลังเปิดให้จองข้ามวัน ต้องกลับมาแก้ตรงนี้ด้วย ไม่งั้นนาทีจะถูกนับเกินความจริง
+     *     และ busiestDay อาจชี้ไปวันที่อยู่นอกช่วงที่ขอ — ผิดแบบไม่มี error ให้เห็น
+     */
     const now = deps.clock.now();
     const [rooms, inRange] = await Promise.all([
       deps.rooms.findAll(),

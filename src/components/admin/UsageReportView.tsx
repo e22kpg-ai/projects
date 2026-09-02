@@ -1,7 +1,12 @@
 import type { RoomUsageReport } from "@/core/use-cases/summarize-room-usage.use-case";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatThaiShort, toISODate } from "@/components/ui/date-utils";
-import { formatDuration, formatTimeOfDay } from "@/components/ui/time-utils";
+import {
+  CLOSE_HOUR,
+  OPEN_HOUR,
+  formatDuration,
+  formatTimeOfDay,
+} from "@/components/ui/time-utils";
 import { DRESS_CODE_LABELS } from "@/components/booking/dress-code-options";
 
 /*
@@ -11,6 +16,17 @@ import { DRESS_CODE_LABELS } from "@/components/booking/dress-code-options";
  * เรียงจากหยาบไปละเอียด: ตัวเลขสรุป → แยกตามห้อง → แยกตามหน่วยงาน → รายการเต็ม
  * คนที่เปิดมาดูส่วนใหญ่ต้องการแค่สองบล็อกแรก ส่วนรายการเต็มมีไว้ให้ตรวจสอบย้อนกลับได้
  */
+
+/*
+ * เพดานจำนวนแถวของตาราง "รายการทั้งหมด"
+ *
+ * ★ ช่วงรายงานยาวได้ถึง 366 วัน (ดู summarize-room-usage.use-case.ts) องค์กรที่ประชุมวันละ 30 ครั้ง
+ *   จะได้หมื่นกว่า <tr> ใน HTML ก้อนเดียว หน้าอืดและไฟล์บวมโดยที่ไม่มีใครไล่อ่านครบอยู่ดี
+ *
+ * ★ เพดานนี้ตัดเฉพาะ "แถวที่แสดง" เท่านั้น ตัวเลขสรุปทุกตัวข้างบน (ครั้ง เวลารวม อัตราการใช้
+ *   วันที่คึกคักที่สุด) ยังคำนวณจากข้อมูลทั้งหมดเสมอ — ถ้าเผลอไปตัดที่ต้นทาง ตัวเลขจะผิดเงียบๆ
+ */
+const MAX_ENTRY_ROWS = 200;
 
 function hours(minutes: number): string {
   return minutes === 0 ? "—" : formatDuration(minutes);
@@ -25,6 +41,9 @@ export function UsageReportView({ report }: { report: RoomUsageReport }) {
       />
     );
   }
+
+  const shownEntries = report.entries.slice(0, MAX_ENTRY_ROWS);
+  const hiddenEntries = report.entries.length - shownEntries.length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -108,6 +127,15 @@ export function UsageReportView({ report }: { report: RoomUsageReport }) {
             </tbody>
           </table>
         </div>
+        {/*
+          บอกตัวหารให้ชัด ไม่งั้นคนอ่านจะตีความ 70% ว่า "ยังว่างอีกเยอะ" ทั้งที่จองเต็มทุกวันทำการแล้ว
+          — ตัวเลขที่ตีความผิดได้เงียบๆ อันตรายกว่าตัวเลขที่ไม่มี
+        */}
+        <p className="text-xs text-muted">
+          อัตราการใช้หารด้วยเวลาทำการ ({OPEN_HOUR}:00–{CLOSE_HOUR}:00) คูณจำนวนวันในช่วงทั้งหมด{" "}
+          {report.daysInRange} วัน ซึ่งรวมเสาร์–อาทิตย์และวันหยุดด้วย ห้องที่ถูกจองเต็มทุกวันทำการ
+          จึงขึ้นราว 70% ไม่ใช่ 100%
+        </p>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -157,7 +185,7 @@ export function UsageReportView({ report }: { report: RoomUsageReport }) {
               </tr>
             </thead>
             <tbody>
-              {report.entries.map((entry) => {
+              {shownEntries.map((entry) => {
                 const room = report.byRoom.find((r) => r.roomId === entry.roomId);
                 return (
                   <tr key={entry.id}>
@@ -185,6 +213,12 @@ export function UsageReportView({ report }: { report: RoomUsageReport }) {
             </tbody>
           </table>
         </div>
+        {hiddenEntries > 0 && (
+          <p className="text-xs text-muted">
+            แสดง {MAX_ENTRY_ROWS} รายการแรก (เรียงตามเวลาเริ่ม) ยังมีอีก {hiddenEntries} รายการ
+            ที่ไม่ได้แสดง — ย่อช่วงวันที่ลงเพื่อดูส่วนที่เหลือ ตัวเลขสรุปด้านบนนับครบทุกรายการแล้ว
+          </p>
+        )}
       </section>
     </div>
   );
