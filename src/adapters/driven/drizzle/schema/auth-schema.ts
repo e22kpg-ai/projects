@@ -1,4 +1,4 @@
-// Generated via `npm run auth:generate-schema`, plus three manual patches:
+// Generated via `npm run auth:generate-schema`, plus four manual patches:
 // (1) the `issuer` column + unique index on `account` (better-auth 1.7's
 // "account identity is scoped by issuer" change) — the installed CLI version
 // did not emit it.
@@ -7,8 +7,11 @@
 // `user.additionalFields` config in auth.ts), deliberately NOT using
 // better-auth's official `admin()` plugin, since that plugin would also add
 // unused `banned`/`banReason`/`banExpires`/`impersonatedBy` columns.
+// (3) the approval-workflow note on `user.status` (inline below).
+// (4) the `rate_limit` table (inline below) — the CLI emits it only when
+// `rateLimit.storage` is already set to "database" in the config.
 // Re-run the generator after upgrading better-auth and diff before accepting,
-// in case either patch still needs to be re-added by hand.
+// in case any patch still needs to be re-added by hand.
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -93,6 +96,22 @@ export const account = sqliteTable(
     uniqueIndex("account_issuer_accountId_unique").on(table.issuer, table.accountId),
   ],
 );
+
+/*
+ * (4) ตาราง rateLimit ของ better-auth — จะถูกใช้ก็ต่อเมื่อตั้ง rateLimit.storage = "database"
+ *     ในตัวเลือกของ betterAuth() (ดู auth.ts) ค่าตั้งต้นของไลบรารีคือเก็บในหน่วยความจำ
+ *     ซึ่งบน serverless แต่ละ instance นับแยกกัน คนละ instance = โควตาใหม่
+ *
+ *     ชื่อ property ต้องเป็น camelCase ให้ตรงกับ fieldName ที่ better-auth ใช้เปิดตาราง
+ *     (key / count / lastRequest) ส่วนชื่อคอลัมน์ใน SQLite เป็น snake_case ตามไฟล์นี้
+ */
+export const rateLimit = sqliteTable("rate_limit", {
+  id: text("id").primaryKey(),
+  /* ip|path — unique เพราะ better-auth หาแถวด้วยคีย์นี้ตัวเดียวแล้วนับต่อจากค่าเดิม */
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request").notNull(),
+});
 
 export const verification = sqliteTable(
   "verification",

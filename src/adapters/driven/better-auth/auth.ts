@@ -9,6 +9,25 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+
+  /*
+   * เก็บตัวนับ rate limit ไว้ในฐานข้อมูล ไม่ใช่ในหน่วยความจำของ process
+   *
+   * ★ ค่าตั้งต้นของ better-auth คือ "memory" ซึ่งบน serverless แทบไม่กันอะไรเลย
+   *   แต่ละ instance นับของตัวเอง คนที่ยิงรัวๆ จะถูกกระจายไปหลาย instance
+   *   แล้วได้โควตาใหม่ทุกครั้ง — กฎ "sign-in ได้ 3 ครั้งต่อ 10 วินาที" ที่ไลบรารี
+   *   ตั้งมาให้จึงกลายเป็นแค่การชะลอ ไม่ใช่การกัน brute force จริง
+   *
+   * ★ ไม่ตั้ง advanced.ipAddress โดยตั้งใจ — ค่าตั้งต้นอ่าน x-forwarded-for อยู่แล้ว
+   *   และจะเชื่อก็ต่อเมื่อ header มีค่าเดียว (ดู @better-auth/core/utils/ip)
+   *   ซึ่งเป็นค่าตั้งต้นที่ปลอดภัยกว่าการไปประกาศ trustedProxies เอง
+   *   ถ้าประกาศผิด คนข้างนอกจะปลอม header แล้วได้ bucket ใหม่ทุก request ทันที
+   *   ถ้าหา IP ไม่ได้ ไลบรารีจะเตือนใน log แล้วตกไปใช้ bucket รวม ซึ่งเข้มเกินไป
+   *   แต่ยังปลอดภัย — เจอ log นั้นเมื่อไหร่ค่อยมาตั้ง trustedProxies ให้ตรงกับ host จริง
+   */
+  rateLimit: {
+    storage: "database",
+  },
   user: {
     additionalFields: {
       role: {
