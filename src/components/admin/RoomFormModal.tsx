@@ -35,6 +35,15 @@ export function RoomFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
+  /*
+   * ลำดับความสำคัญของค่าตั้งต้นในแต่ละช่อง:
+   *   1. ค่าที่เพิ่งกรอกแล้ว submit ไม่ผ่าน (state.values) — React 19 เคลียร์ฟอร์ม
+   *      uncontrolled ทิ้งหลัง action จบ ถ้าไม่เอาค่ากลับมาใส่ ผู้ใช้จะพิมพ์ใหม่ทั้งหมด
+   *   2. ค่าเดิมของห้อง (โหมดแก้ไข)
+   *   3. ว่าง (โหมดเพิ่มห้อง)
+   */
+  const v = state.values;
+
   return (
     <Modal
       open={open}
@@ -45,32 +54,50 @@ export function RoomFormModal({
         {mode === "edit" && room && <input type="hidden" name="roomId" value={room.id} />}
 
         <Field label="ชื่อห้อง" required>
-          <TextInput type="text" name="name" defaultValue={room?.name} required />
+          <TextInput type="text" name="name" defaultValue={v?.name ?? room?.name ?? ""} required />
         </Field>
 
         <Field label="ที่ตั้ง">
-          <TextInput type="text" name="location" defaultValue={room?.location ?? ""} />
+          <TextInput
+            type="text"
+            name="location"
+            defaultValue={v?.location ?? room?.location ?? ""}
+          />
         </Field>
 
         <Field label="จำนวนผู้เข้าร่วมสูงสุด" required>
-          <TextInput type="number" name="capacity" min={1} defaultValue={room?.capacity} required />
+          <TextInput
+            type="number"
+            name="capacity"
+            min={1}
+            defaultValue={v?.capacity ?? room?.capacity ?? ""}
+            required
+          />
         </Field>
 
         <Field label="รายละเอียดห้อง">
-          <Textarea name="description" rows={3} defaultValue={room?.description ?? ""} />
+          <Textarea
+            name="description"
+            rows={3}
+            defaultValue={v?.description ?? room?.description ?? ""}
+          />
         </Field>
 
         <Field label="อุปกรณ์โสตทัศนูปกรณ์" hint="คั่นแต่ละรายการด้วยจุลภาค เช่น โปรเจกเตอร์, จอทีวี, ไมโครโฟน">
           <TextInput
             type="text"
             name="equipment"
-            defaultValue={room?.equipment.join(", ") ?? ""}
+            defaultValue={v?.equipment ?? room?.equipment.join(", ") ?? ""}
             placeholder="โปรเจกเตอร์, จอทีวี, ไมโครโฟน"
           />
         </Field>
 
         <Field label="ผู้รับผิดชอบกำกับดูแลห้องประชุม">
-          <TextInput type="text" name="ownerName" defaultValue={room?.ownerName ?? ""} />
+          <TextInput
+            type="text"
+            name="ownerName"
+            defaultValue={v?.ownerName ?? room?.ownerName ?? ""}
+          />
         </Field>
 
         {state.error && <Alert>{state.error}</Alert>}

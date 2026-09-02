@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/adapters/driven/better-auth/auth-client";
-import { DEV_USER_EMAIL, DEV_USER_PASSWORD } from "@/adapters/driven/better-auth/dev-user";
+import { getDevLoginCredentials } from "@/adapters/driving/actions/dev-auth.actions";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -40,10 +40,9 @@ export function LoginForm() {
     setError(null);
     setPending(true);
 
-    const { error: signInError } = await authClient.signIn.email({
-      email: DEV_USER_EMAIL,
-      password: DEV_USER_PASSWORD,
-    });
+    /* ค่าคงที่อยู่ฝั่ง server เท่านั้น จึงไม่มีทางติดไปใน bundle ของ production */
+    const { email, password } = await getDevLoginCredentials();
+    const { error: signInError } = await authClient.signIn.email({ email, password });
 
     setPending(false);
     if (signInError) {

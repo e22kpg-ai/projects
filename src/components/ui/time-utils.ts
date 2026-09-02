@@ -10,9 +10,15 @@ import type { SelectOption, TimeString } from "./types";
  * เรียงตามพจนานุกรมตรงกับเรียงตามเวลาพอดี
  */
 
-export const OPEN_HOUR = 8;
-export const CLOSE_HOUR = 18;
-export const SLOT_MINUTES = 30;
+/*
+ * ค่าคงที่เวลาทำการย้ายไปอยู่ที่ core/domain/booking-rules.ts แล้ว เพราะเป็นกฎธุรกิจ
+ * ที่ use-case ต้องบังคับจริงฝั่ง server ไม่ใช่แค่ตัดตัวเลือกในหน้าจอ
+ * re-export ต่อที่นี่เพื่อให้ฝั่ง UI ยัง import จากที่เดิมได้เหมือนเดิม
+ */
+import { OPEN_HOUR, CLOSE_HOUR, SLOT_MINUTES } from "@/core/domain/booking-rules";
+
+export { OPEN_HOUR, CLOSE_HOUR, SLOT_MINUTES };
+
 export const TOTAL_SLOTS = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
 
 /** index ช่อง → "HH:MM" (0 = เวลาเปิดทำการ) */

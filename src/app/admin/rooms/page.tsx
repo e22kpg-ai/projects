@@ -1,13 +1,11 @@
-import { notFound, redirect } from "next/navigation";
 import { getAllRoomsPlain } from "@/adapters/driving/queries/room.queries";
-import { container } from "@/composition/container";
+import { requireAdmin } from "@/adapters/driving/queries/session.queries";
 import { RoomsAdminSection } from "@/components/admin/RoomsAdminSection";
 import { NavBar } from "@/components/layout/NavBar";
+import { Button } from "@/components/ui/Button";
 
 export default async function AdminRoomsPage() {
-  const user = await container.authService.getCurrentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "admin") notFound();
+  await requireAdmin();
 
   const rooms = await getAllRoomsPlain();
 
@@ -15,6 +13,13 @@ export default async function AdminRoomsPage() {
     <>
       <NavBar />
       <main className="max-w-5xl mx-auto w-full p-6 flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">จัดการห้องประชุม</h1>
+          <Button href="/admin/users" variant="secondary">
+            จัดการสิทธิ์ผู้ใช้
+          </Button>
+        </div>
+
         <RoomsAdminSection rooms={rooms} />
       </main>
     </>

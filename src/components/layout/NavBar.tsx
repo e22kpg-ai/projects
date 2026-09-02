@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { container } from "@/composition/container";
+import { getSessionUser } from "@/adapters/driving/queries/session.queries";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { NavLinks } from "./NavLinks";
 import { SignOutButton } from "./SignOutButton";
@@ -11,9 +11,11 @@ import { SignOutButton } from "./SignOutButton";
  * เป็น async เพื่ออ่าน role ของผู้ใช้ปัจจุบันแล้วส่งลงไปให้ NavLinks —
  * นี่เป็นแค่ความสะดวกด้าน UI (ซ่อนลิงก์) ไม่ใช่จุดบังคับสิทธิ์จริง
  * จุดบังคับสิทธิ์จริงอยู่ที่หน้า /admin/* และ use-case แต่ละตัว
+ *
+ * getSessionUser ห่อด้วย cache() ไว้แล้ว การเรียกซ้ำกับตัวหน้าจึงไม่ยิง DB เพิ่ม
  */
 export async function NavBar() {
-  const user = await container.authService.getCurrentUser();
+  const user = await getSessionUser();
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">

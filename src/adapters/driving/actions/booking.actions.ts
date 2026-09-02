@@ -6,14 +6,32 @@ import { redirect } from "next/navigation";
 import { container } from "@/composition/container";
 import { DomainError } from "@/core/domain/errors";
 
+/*
+ * ★ ต้องเช็ค "รูปแบบ" ไม่ใช่แค่ "ไม่ว่าง"
+ *   ของเดิมเป็น z.string().min(1) เฉยๆ ยิง date=abc มาก็ผ่าน แล้วกลายเป็น Invalid Date
+ *   ซึ่ง NaN เทียบอะไรก็ false หมด เลยรอดทุกด่านไปพังที่ driver เป็น 500 เต็มหน้า
+ *   (กฎเรื่องเวลาทำการ/ห้ามย้อนหลัง/ความยาวสูงสุด อยู่ใน create-booking.use-case.ts)
+ */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/* กันข้อความยาวผิดปกติที่จะไปโผล่ยาวเหยียดใน tooltip ของทุกคน */
+const TEXT_MAX = 200;
+
 const bookingFormSchema = z.object({
   roomId: z.string().min(1),
-  title: z.string().min(1, "กรุณาระบุหัวข้อการจอง"),
-  date: z.string().min(1, "กรุณาเลือกวันที่"),
-  startTime: z.string().min(1, "กรุณาเลือกเวลาเริ่มต้น"),
-  endTime: z.string().min(1, "กรุณาเลือกเวลาสิ้นสุด"),
-  department: z.string().min(1, "กรุณาระบุหน่วยงานรับผิดชอบ"),
-  chairperson: z.string().min(1, "กรุณาระบุชื่อประธานการประชุม"),
+  title: z.string().min(1, "กรุณาระบุหัวข้อการจอง").max(TEXT_MAX, "หัวข้อยาวเกินไป"),
+  date: z.string().regex(ISO_DATE, "รูปแบบวันที่ไม่ถูกต้อง"),
+  startTime: z.string().regex(HH_MM, "รูปแบบเวลาเริ่มต้นไม่ถูกต้อง"),
+  endTime: z.string().regex(HH_MM, "รูปแบบเวลาสิ้นสุดไม่ถูกต้อง"),
+  department: z
+    .string()
+    .min(1, "กรุณาระบุหน่วยงานรับผิดชอบ")
+    .max(TEXT_MAX, "ชื่อหน่วยงานยาวเกินไป"),
+  chairperson: z
+    .string()
+    .min(1, "กรุณาระบุชื่อประธานการประชุม")
+    .max(TEXT_MAX, "ชื่อประธานยาวเกินไป"),
   dressCode: z.enum(["long_sleeve_uniform", "duty_uniform", "unspecified"]),
 });
 
@@ -67,7 +85,12 @@ export async function createBookingAction(
     if (err instanceof DomainError) {
       return { error: err.message };
     }
-    throw err;
+    /*
+     * error ที่ไม่ใช่ DomainError (เช่น Turso ล่ม) ถ้า throw ต่อ error boundary จะกินทั้งหน้า
+     * แล้วสิ่งที่ผู้ใช้กรอกมาหายหมด — คืนเป็นข้อความแทน แล้ว log ไว้ให้ตามดูฝั่ง server
+     */
+    console.error("createBookingAction failed", err);
+    return { error: "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง" };
   }
 
   revalidatePath("/rooms");

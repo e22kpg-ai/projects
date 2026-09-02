@@ -10,8 +10,13 @@ export async function getCalendarData({ date, roomId }: CalendarQueryParams) {
   const dayEnd = new Date(`${date}T00:00:00`);
   dayEnd.setDate(dayEnd.getDate() + 1);
 
+  /*
+   * ใช้ listRoomsPlain ไม่ใช่ listRoomsWithStatus — ปฏิทินใช้แค่ id/name ของห้อง
+   * ส่วน isBusyNow ต้องยิง query การจอง "ตอนนี้" เพิ่มอีกหนึ่งชุด (แถมเป็น full scan
+   * เพราะไม่ได้ระบุ room_id) แล้วผลลัพธ์ก็ถูกโยนทิ้งโดยไม่มีใครอ่าน
+   */
   const [rooms, bookings] = await Promise.all([
-    container.listRoomsWithStatus(),
+    container.listRoomsPlain(),
     container.listBookingsInRange({ start: dayStart, end: dayEnd, roomId }),
   ]);
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { cloneElement, useId, useRef, useState } from "react";
+import { cloneElement, useCallback, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAnchoredPosition } from "./use-anchored-position";
+import { useDismiss } from "./use-dismiss";
 
 /*
  * คำอธิบายสั้นๆ ตอนชี้หรือโฟกัส
@@ -49,10 +50,17 @@ export function Tooltip({ content, children, delay = 400 }: TooltipProps) {
     timerRef.current = window.setTimeout(() => setOpen(true), delay);
   }
 
-  function hide() {
+  const hide = useCallback(() => {
     window.clearTimeout(timerRef.current);
     setOpen(false);
-  }
+  }, []);
+
+  /*
+   * WCAG 1.4.13 (Content on Hover or Focus): เนื้อหาที่โผล่มาต้องปิดได้โดยไม่ต้องย้ายเมาส์/โฟกัส
+   * กล่องของ BookingBlock สูงหลายบรรทัดและบังการจองที่อยู่ข้างๆ ได้จริง
+   * outsidePointer: false เพราะ onPointerDown บน trigger จัดการเคสคลิกอยู่แล้ว
+   */
+  useDismiss({ active: open, onDismiss: hide, refs: [anchorRef, floatingRef], outsidePointer: false });
 
   return (
     <>

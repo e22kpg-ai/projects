@@ -12,7 +12,8 @@ import { Modal } from "@/components/ui/Modal";
 
 const initialState: RoomFormState = {};
 
-export function DeleteRoomDialog({ room, onClose }: { room: Room | null; onClose: () => void }) {
+/* mount เฉพาะตอนจะลบจริง (ดู RoomsAdminSection) — state ของ action จึงเริ่มใหม่ทุกครั้ง */
+export function DeleteRoomDialog({ room, onClose }: { room: Room; onClose: () => void }) {
   const [state, formAction, pending] = useActionState(deleteRoomAction, initialState);
 
   useEffect(() => {
@@ -21,12 +22,12 @@ export function DeleteRoomDialog({ room, onClose }: { room: Room | null; onClose
   }, [state]);
 
   return (
-    <Modal open={room !== null} onClose={onClose} title="ลบห้องประชุม" size="sm">
+    <Modal open onClose={onClose} title="ลบห้องประชุม" size="sm">
       <form action={formAction} className="flex flex-col gap-4">
-        {room && <input type="hidden" name="roomId" value={room.id} />}
+        <input type="hidden" name="roomId" value={room.id} />
 
         <Alert variant="warning">
-          ลบห้อง “{room?.name}” แล้ว การจองทั้งหมดของห้องนี้จะถูกลบไปด้วยและกู้คืนไม่ได้
+          ลบห้อง “{room.name}” แล้ว การจองทั้งหมดของห้องนี้จะถูกลบไปด้วยและกู้คืนไม่ได้
         </Alert>
 
         {state.error && <Alert>{state.error}</Alert>}

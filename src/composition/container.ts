@@ -20,7 +20,11 @@ const clock = new SystemClock();
 
 export const container = {
   authService,
-  createBooking: makeCreateBooking({ bookings: bookingRepository, rooms: roomRepository }),
+  createBooking: makeCreateBooking({
+    bookings: bookingRepository,
+    rooms: roomRepository,
+    clock,
+  }),
   listRoomsWithStatus: makeListRoomsWithStatus({
     rooms: roomRepository,
     bookings: bookingRepository,

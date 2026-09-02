@@ -1,0 +1,1 @@
+CREATE INDEX `time_range_idx` ON `bookings` (`start_time`,`end_time`);

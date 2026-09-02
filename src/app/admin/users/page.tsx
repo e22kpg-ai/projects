@@ -1,13 +1,11 @@
-import { notFound, redirect } from "next/navigation";
+import { requireAdmin } from "@/adapters/driving/queries/session.queries";
 import { container } from "@/composition/container";
 import { UserRoleTable } from "@/components/admin/UserRoleTable";
 import { NavBar } from "@/components/layout/NavBar";
 import { Button } from "@/components/ui/Button";
 
 export default async function AdminUsersPage() {
-  const user = await container.authService.getCurrentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "admin") notFound();
+  const user = await requireAdmin();
 
   const users = await container.listUsers({ actingUser: user });
 

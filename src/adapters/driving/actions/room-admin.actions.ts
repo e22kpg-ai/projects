@@ -27,9 +27,40 @@ function parseEquipment(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+/** ค่าดิบที่ผู้ใช้กรอกมา ส่งกลับไปให้ฟอร์มเรนเดอร์ต่อเมื่อ submit ไม่ผ่าน */
+export interface RoomFormValues {
+  name: string;
+  location: string;
+  capacity: string;
+  description: string;
+  equipment: string;
+  ownerName: string;
+}
+
 export interface RoomFormState {
   error?: string;
   success?: boolean;
+  /*
+   * React 19 reset ฟอร์มที่เป็น uncontrolled ให้อัตโนมัติเมื่อ action ทำงานจบ
+   * ถ้าไม่ส่งค่ากลับไป ผู้ใช้ที่กรอกครบ 6 ช่องแล้วใส่ความจุผิด จะเสียของที่พิมพ์ทั้งหมด
+   */
+  values?: RoomFormValues;
+}
+
+function readValues(formData: FormData): RoomFormValues {
+  const read = (key: string) => {
+    const value = formData.get(key);
+    return typeof value === "string" ? value : "";
+  };
+
+  return {
+    name: read("name"),
+    location: read("location"),
+    capacity: read("capacity"),
+    description: read("description"),
+    equipment: read("equipment"),
+    ownerName: read("ownerName"),
+  };
 }
 
 export async function createRoomAction(
@@ -39,16 +70,10 @@ export async function createRoomAction(
   const user = await container.authService.getCurrentUser();
   if (!user) redirect("/login");
 
-  const parsed = roomFormSchema.safeParse({
-    name: formData.get("name"),
-    location: formData.get("location"),
-    capacity: formData.get("capacity"),
-    description: formData.get("description"),
-    equipment: formData.get("equipment"),
-    ownerName: formData.get("ownerName"),
-  });
+  const values = readValues(formData);
+  const parsed = roomFormSchema.safeParse(values);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values };
   }
 
   try {
@@ -62,12 +87,13 @@ export async function createRoomAction(
       ownerName: emptyToNull(parsed.data.ownerName),
     });
   } catch (err) {
-    if (err instanceof DomainError) return { error: err.message };
+    if (err instanceof DomainError) return { error: err.message, values };
     throw err;
   }
 
   revalidatePath("/admin/rooms");
   revalidatePath("/rooms");
+  revalidatePath("/calendar");
   return { success: true };
 }
 
@@ -83,16 +109,10 @@ export async function updateRoomAction(
     return { error: "ข้อมูลไม่ถูกต้อง" };
   }
 
-  const parsed = roomFormSchema.safeParse({
-    name: formData.get("name"),
-    location: formData.get("location"),
-    capacity: formData.get("capacity"),
-    description: formData.get("description"),
-    equipment: formData.get("equipment"),
-    ownerName: formData.get("ownerName"),
-  });
+  const values = readValues(formData);
+  const parsed = roomFormSchema.safeParse(values);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values };
   }
 
   try {
@@ -109,12 +129,14 @@ export async function updateRoomAction(
       },
     });
   } catch (err) {
-    if (err instanceof DomainError) return { error: err.message };
+    if (err instanceof DomainError) return { error: err.message, values };
     throw err;
   }
 
   revalidatePath("/admin/rooms");
   revalidatePath("/rooms");
+  /* ชื่อห้องที่เปลี่ยนไปโผล่เป็นหัวคอลัมน์ในปฏิทินด้วย */
+  revalidatePath("/calendar");
   return { success: true };
 }
 

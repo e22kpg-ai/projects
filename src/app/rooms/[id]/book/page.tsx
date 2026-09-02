@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRoomById, getRoomBookings } from "@/adapters/driving/queries/room.queries";
+import { requireUser } from "@/adapters/driving/queries/session.queries";
 import { BookingForm, type BookedSlot } from "@/components/booking/BookingForm";
 import { NavBar } from "@/components/layout/NavBar";
-import { toISODate } from "@/components/ui/date-utils";
+import { addDays, toISODate, todayISO } from "@/components/ui/date-utils";
 import { MapPinIcon, UsersIcon } from "@/components/ui/Icons";
 import { formatTimeOfDay } from "@/components/ui/time-utils";
 
@@ -11,6 +12,8 @@ import { formatTimeOfDay } from "@/components/ui/time-utils";
 const LOOKAHEAD_DAYS = 60;
 
 export default async function BookRoomPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireUser();
+
   const { id } = await params;
 
   const [room, bookings] = await Promise.all([
@@ -60,7 +63,13 @@ export default async function BookRoomPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="max-w-xl">
-          <BookingForm roomId={room.id} bookedSlots={bookedSlots} />
+          {/* today/maxDate คำนวณที่ server ที่เดียว ให้ตรงกับช่วงที่ prefetch การจองมาจริง */}
+          <BookingForm
+            roomId={room.id}
+            bookedSlots={bookedSlots}
+            today={todayISO()}
+            maxDate={addDays(todayISO(), LOOKAHEAD_DAYS)}
+          />
         </div>
       </main>
     </>

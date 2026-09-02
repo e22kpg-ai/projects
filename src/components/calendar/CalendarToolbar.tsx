@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { RoomWithStatus } from "@/core/domain/entities/room";
+import type { Room } from "@/core/domain/entities/room";
 import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
-import { addDays, formatThaiLong, todayISO } from "@/components/ui/date-utils";
+import { addDays, formatThaiLong } from "@/components/ui/date-utils";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icons";
 import { Select } from "@/components/ui/Select";
 import type { ISODate } from "@/components/ui/types";
@@ -28,15 +28,17 @@ function buildHref(date: ISODate, roomId?: string): string {
 
 export function CalendarToolbar({
   date,
+  today,
   roomId,
   rooms,
 }: {
   date: ISODate;
+  /* คำนวณมาจาก server แล้ว — ห้ามเรียก todayISO() เองที่นี่ ดูเหตุผลใน CalendarView */
+  today: ISODate;
   roomId?: string;
-  rooms: RoomWithStatus[];
+  rooms: Room[];
 }) {
   const router = useRouter();
-  const today = todayISO();
 
   const roomOptions = [
     { value: "", label: "ทุกห้อง" },
@@ -64,15 +66,20 @@ export function CalendarToolbar({
         </Button>
       </div>
 
-      <Button
-        href={buildHref(today, roomId)}
-        variant="secondary"
-        size="sm"
-        /* กดไปก็ไม่ไปไหนถ้าอยู่ที่วันนี้อยู่แล้ว บอกให้รู้ด้วยการหรี่ปุ่มลง */
-        className={date === today ? "opacity-50 pointer-events-none" : undefined}
-      >
-        วันนี้
-      </Button>
+      {/*
+        อยู่ที่วันนี้อยู่แล้วก็ไม่ต้องมีลิงก์ให้กด — เรนเดอร์เป็น <button disabled> ไปเลย
+        ของเดิมใช้ opacity + pointer-events-none ซึ่งกันได้แค่เมาส์ คนใช้คีย์บอร์ด
+        ยัง Tab เข้าไปเจอปุ่มที่ "ดูเหมือนปิดอยู่" แต่กดแล้วยังไปได้อยู่
+      */}
+      {date === today ? (
+        <Button variant="secondary" size="sm" disabled>
+          วันนี้
+        </Button>
+      ) : (
+        <Button href={buildHref(today, roomId)} variant="secondary" size="sm">
+          วันนี้
+        </Button>
+      )}
 
       <DatePicker
         value={date}

@@ -19,6 +19,20 @@ export class InvalidBookingRangeError extends DomainError {
   }
 }
 
+export class BookingInPastError extends DomainError {
+  constructor(message = "จองย้อนหลังไม่ได้") {
+    super(message);
+    this.name = "BookingInPastError";
+  }
+}
+
+export class BookingOutsideBusinessHoursError extends DomainError {
+  constructor(message = "จองได้เฉพาะในเวลาทำการ 08:00–18:00 ของวันเดียวกัน") {
+    super(message);
+    this.name = "BookingOutsideBusinessHoursError";
+  }
+}
+
 export class RoomNotFoundError extends DomainError {
   constructor(roomId: string) {
     super(`ไม่พบห้องประชุม (${roomId})`);

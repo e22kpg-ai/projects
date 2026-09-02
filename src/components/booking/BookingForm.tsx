@@ -14,7 +14,6 @@ import { Radio, RadioGroup } from "@/components/ui/RadioGroup";
 import { TextInput } from "@/components/ui/TextInput";
 import { TimePicker } from "@/components/ui/TimePicker";
 import { addMinutesClamped, formatDuration, minutesBetween } from "@/components/ui/time-utils";
-import { todayISO } from "@/components/ui/date-utils";
 import type { ISODate, TimeString } from "@/components/ui/types";
 import { DRESS_CODE_OPTIONS } from "./dress-code-options";
 
@@ -43,14 +42,17 @@ function overlapsBooked(
 export function BookingForm({
   roomId,
   bookedSlots,
+  today,
+  maxDate,
 }: {
   roomId: string;
   bookedSlots: BookedSlot[];
+  /* คำนวณมาจาก server — ห้ามเรียก todayISO() เองที่นี่ ไม่งั้น SSR กับ hydrate ได้คนละวันตอนข้ามเที่ยงคืน */
+  today: ISODate;
+  /* ขอบบนของช่วงที่ prefetch การจองมาให้ เลือกเกินนี้จะไม่รู้ว่าชนกับใคร */
+  maxDate: ISODate;
 }) {
   const [state, formAction, pending] = useActionState(createBookingAction, initialState);
-
-  /* คำนวณจากเวลาท้องถิ่น ไม่ใช่ toISOString() — ไม่งั้นหลังห้าทุ่มที่ไทยจะได้วันของเมื่อวาน */
-  const today = todayISO();
 
   const [date, setDate] = useState<ISODate>(today);
   const [startTime, setStartTime] = useState<TimeString>("");
@@ -92,7 +94,18 @@ export function BookingForm({
       </Field>
 
       <Field label="วันที่" required>
-        <DatePicker name="date" value={date} onValueChange={setDate} min={today} required />
+        {/*
+          max ต้องมี ไม่งั้นเลือกวันเกินช่วงที่ page prefetch การจองมาให้ได้
+          แล้วฟอร์มจะบอกอย่างมั่นใจว่า "ยังไม่มีใครจองห้องนี้ในวันนี้" ทั้งที่ไม่รู้จริง
+        */}
+        <DatePicker
+          name="date"
+          value={date}
+          onValueChange={setDate}
+          min={today}
+          max={maxDate}
+          required
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

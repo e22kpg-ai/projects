@@ -97,6 +97,13 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
   ที่ล้ำอนาคต 543 ปีโดยไม่มี error ให้เห็น
 - **ห้ามใช้ `Intl.DateTimeFormat` ในข้อความที่ถูก SSR** — ICU ของ Node กับของ browser คนละเวอร์ชันกันได้
   ทำให้เกิด hydration mismatch เงียบๆ ใช้ `THAI_MONTHS` / `THAI_WEEKDAYS_SHORT` ที่เขียนไว้เองแทน
+- **`TZ=Asia/Bangkok` ต้องถูกตั้งใน environment ของ production เสมอ** — โค้ดตีความ "เวลาท้องถิ่น"
+  เป็นเวลาท้องถิ่นของ process ถ้า process รันเป็น UTC (ค่าตั้งต้นของ Vercel) ทุกอย่างที่อิง "ตอนนี้"
+  จะคลาด 7 ชม.: `isBusyNow` บอกว่าห้องว่างทั้งที่กำลังประชุมอยู่ และเส้นเวลาปัจจุบันในปฏิทินหายไปทั้งเช้า
+  จุดที่หลอกตาคือป้ายเวลาจะยังดูถูก เพราะตอนเก็บกับตอนอ่านใช้ offset ผิดตัวเดียวกันเลยหักล้างกันพอดี
+- **อย่าคำนวณ "วันนี้" แยกกันทั้งฝั่ง server และ client** — client component ที่ถูก SSR ด้วย
+  (เช่น `BookingForm`, `CalendarToolbar`) ถ้าเรียก `todayISO()` เองจะได้คนละวันกับที่ server เรนเดอร์มา
+  ตอนข้ามเที่ยงคืน ให้คำนวณที่ server ครั้งเดียวแล้วส่งลงมาเป็น prop
 
 ### ตรวจงาน UI
 

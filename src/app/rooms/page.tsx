@@ -1,4 +1,5 @@
 import { getRoomsWithStatus } from "@/adapters/driving/queries/room.queries";
+import { requireUser } from "@/adapters/driving/queries/session.queries";
 import { BookingSuccessToast } from "@/components/booking/BookingSuccessToast";
 import { NavBar } from "@/components/layout/NavBar";
 import { RoomBrowser } from "@/components/rooms/RoomBrowser";
@@ -10,6 +11,8 @@ export default async function RoomsPage({
 }: {
   searchParams: Promise<{ booked?: string }>;
 }) {
+  await requireUser();
+
   const [rooms, params] = await Promise.all([getRoomsWithStatus(), searchParams]);
 
   const freeCount = rooms.filter((room) => !room.isBusyNow).length;

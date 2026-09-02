@@ -46,6 +46,12 @@ export const bookings = sqliteTable(
   },
   (t) => [
     index("room_time_idx").on(t.roomId, t.startTime, t.endTime),
+    /*
+     * SQLite ใช้ room_time_idx ไม่ได้เมื่อไม่ได้ระบุ room_id (คอลัมน์นำของ index)
+     * ซึ่งคือสองคิวรีที่ถูกยิงบ่อยที่สุด: เช็คห้องว่าง "ตอนนี้" ทุกครั้งที่เปิด /rooms
+     * และปฏิทินแบบ "ทุกห้อง" — ทั้งคู่เป็น full scan ที่โตขึ้นเรื่อยๆ เพราะไม่มีการ archive
+     */
+    index("time_range_idx").on(t.startTime, t.endTime),
     check("end_after_start", sql`${t.endTime} > ${t.startTime}`),
   ],
 );

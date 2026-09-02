@@ -20,8 +20,14 @@ export function makeCreateRoom(deps: CreateRoomDeps) {
       throw new InvalidRoomError("ความจุต้องมากกว่า 0");
     }
 
+    /* zod ฝั่ง action เช็คแค่ min(1) ซึ่ง "   " ผ่าน — ห้องชื่อช่องว่างล้วนจะกลายเป็นแถวว่างเปล่าในทุกหน้า */
+    const name = input.name.trim();
+    if (!name) {
+      throw new InvalidRoomError("กรุณาระบุชื่อห้อง");
+    }
+
     return deps.rooms.create({
-      name: input.name,
+      name,
       location: input.location,
       capacity: input.capacity,
       description: input.description,

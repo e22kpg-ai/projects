@@ -22,7 +22,15 @@ export function makeUpdateRoom(deps: UpdateRoomDeps) {
       throw new InvalidRoomError("ความจุต้องมากกว่า 0");
     }
 
-    const updated = await deps.rooms.update(input.roomId, input.changes);
+    const changes = { ...input.changes };
+    if (changes.name !== undefined) {
+      changes.name = changes.name.trim();
+      if (!changes.name) {
+        throw new InvalidRoomError("กรุณาระบุชื่อห้อง");
+      }
+    }
+
+    const updated = await deps.rooms.update(input.roomId, changes);
     if (!updated) {
       throw new RoomNotFoundError(input.roomId);
     }

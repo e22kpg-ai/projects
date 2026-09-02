@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # เทสต์ทั้งหมดเป็น pure function ไม่แตะฐานข้อมูล แต่ client.ts อ่าน env ตอน import
+      # จึงใส่ค่า dummy ไว้ให้ผ่านขั้น module evaluation
+      TURSO_DATABASE_URL: "file:./ci.db"
+      # ตรึง timezone ให้ตรงกับ production ไม่งั้นเทสต์วันเวลาจะเปลี่ยนผลตาม runner
+      TZ: Asia/Bangkok
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
