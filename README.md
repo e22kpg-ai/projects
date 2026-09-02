@@ -47,3 +47,19 @@ Next.js (App Router) + Turso (libSQL) + Drizzle ORM + Better Auth + Tailwind CSS
 - `npm run db:generate` — generate a new Drizzle migration after changing the schema.
 - `npm run db:studio` — browse the database with Drizzle Studio.
 - `npm run auth:generate-schema` — regenerate `auth-schema.ts` from the Better Auth config (needs `.env.local` filled in).
+
+## Tests
+
+- `npm run test` — vitest unit tests (booking rules, use-cases, date helpers), pinned to `TZ=Asia/Bangkok`.
+- `npm run test:e2e` — Playwright smoke test driven against a dev server you start yourself:
+
+  ```bash
+  npx playwright install chromium   # once
+  npm run dev                       # one terminal
+  npm run test:e2e                  # another terminal
+  ```
+
+  It covers the auth guards (a forged session cookie must land on `/login`; `/admin/*` must 404 for
+  non-admins), the admin room create/reject/delete flow, the explicit-save role change, and booking
+  through to the calendar tooltip. It writes real rows (new users, rooms, bookings), so point it at a
+  dev database only. Screenshots land in `.e2e-shots/` (gitignored); `E2E_BASE_URL` overrides the target.
