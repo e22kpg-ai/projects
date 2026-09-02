@@ -8,6 +8,13 @@
  * หมายเหตุเรื่องค่า dark: ไม่ใช่การกลับหัวกลับหางของ light
  * brand ใน dark ต้องสว่างขึ้นและลด chroma ลง แล้วสลับ on-brand เป็นสีเข้มแทน
  * ไม่งั้นตัวหนังสือบนปุ่มจะอ่านไม่ออก
+ *
+ * บันไดพื้นผิวของโหมดมืด — ปรับทีต้องขยับทั้งบันได ไม่งั้นชั้นจะกลืนกัน:
+ *   background → card (+0.05~0.06 L) → card-raised (+0.05 L) → border (+0.05~0.06 L)
+ * และ *-subtle ทุกตัวต้องสว่างกว่า card-raised เสมอ ไม่งั้น option ที่ active ในลิสต์
+ * (พื้น brand-subtle บน popover ที่เป็น card-raised) จะจมหายไปกับพื้น
+ * ถ้าดัน *-subtle ขึ้น ต้องดันตัวหนังสือคู่ของมัน (brand-500 / success / danger / warning)
+ * ขึ้นตามด้วย ให้ contrast ยังไม่ต่ำกว่า 4.5:1
  */
 
 /* ── skin: corporate (ค่าตั้งต้น) — น้ำเงินธุรกิจ neutral เทากลาง ───────────── */
@@ -32,24 +39,24 @@
   --skin-warning-light: oklch(0.62 0.13 75);
   --skin-warning-subtle-light: oklch(0.96 0.05 85);
 
-  --skin-brand-500-dark: oklch(0.7 0.13 250);
-  --skin-brand-600-dark: oklch(0.78 0.11 250);
-  --skin-brand-subtle-dark: oklch(0.32 0.06 250);
-  --skin-background-dark: oklch(0.16 0 0);
-  --skin-foreground-dark: oklch(0.95 0 0);
-  --skin-card-dark: oklch(0.22 0 0);
-  --skin-card-raised-dark: oklch(0.27 0 0);
+  --skin-brand-500-dark: oklch(0.74 0.13 250);
+  --skin-brand-600-dark: oklch(0.82 0.1 250);
+  --skin-brand-subtle-dark: oklch(0.37 0.06 250);
+  --skin-background-dark: oklch(0.21 0 0);
+  --skin-foreground-dark: oklch(0.96 0 0);
+  --skin-card-dark: oklch(0.27 0 0);
+  --skin-card-raised-dark: oklch(0.32 0 0);
   --skin-overlay-dark: oklch(0.05 0 0 / 0.65);
-  --skin-muted-dark: oklch(0.68 0 0);
-  --skin-border-dark: oklch(0.3 0 0);
+  --skin-muted-dark: oklch(0.72 0 0);
+  --skin-border-dark: oklch(0.37 0 0);
   --skin-on-brand-dark: oklch(0.15 0.02 250);
-  --skin-ring-dark: oklch(0.7 0.13 250);
-  --skin-success-dark: oklch(0.75 0.15 150);
-  --skin-success-subtle-dark: oklch(0.3 0.06 150);
-  --skin-danger-dark: oklch(0.7 0.16 25);
-  --skin-danger-subtle-dark: oklch(0.3 0.08 25);
-  --skin-warning-dark: oklch(0.8 0.13 80);
-  --skin-warning-subtle-dark: oklch(0.32 0.06 80);
+  --skin-ring-dark: oklch(0.74 0.13 250);
+  --skin-success-dark: oklch(0.79 0.15 150);
+  --skin-success-subtle-dark: oklch(0.35 0.06 150);
+  --skin-danger-dark: oklch(0.74 0.16 25);
+  --skin-danger-subtle-dark: oklch(0.35 0.08 25);
+  --skin-warning-dark: oklch(0.83 0.13 80);
+  --skin-warning-subtle-dark: oklch(0.37 0.06 80);
 }
 
 /* ── skin: forest — เขียวป่า neutral อมเขียวอ่อนๆ ────────────────────────── */
@@ -73,22 +80,22 @@
   --skin-warning-light: oklch(0.6 0.13 70);
   --skin-warning-subtle-light: oklch(0.95 0.05 80);
 
-  --skin-brand-500-dark: oklch(0.72 0.14 155);
-  --skin-brand-600-dark: oklch(0.8 0.12 155);
-  --skin-brand-subtle-dark: oklch(0.3 0.05 155);
-  --skin-background-dark: oklch(0.15 0.012 150);
-  --skin-foreground-dark: oklch(0.95 0.006 150);
-  --skin-card-dark: oklch(0.21 0.014 150);
-  --skin-card-raised-dark: oklch(0.26 0.014 150);
+  --skin-brand-500-dark: oklch(0.76 0.14 155);
+  --skin-brand-600-dark: oklch(0.84 0.11 155);
+  --skin-brand-subtle-dark: oklch(0.35 0.05 155);
+  --skin-background-dark: oklch(0.2 0.012 150);
+  --skin-foreground-dark: oklch(0.96 0.006 150);
+  --skin-card-dark: oklch(0.26 0.014 150);
+  --skin-card-raised-dark: oklch(0.31 0.014 150);
   --skin-overlay-dark: oklch(0.05 0.01 150 / 0.7);
-  --skin-muted-dark: oklch(0.68 0.014 150);
-  --skin-border-dark: oklch(0.3 0.016 150);
+  --skin-muted-dark: oklch(0.72 0.014 150);
+  --skin-border-dark: oklch(0.37 0.016 150);
   --skin-on-brand-dark: oklch(0.16 0.03 155);
-  --skin-ring-dark: oklch(0.72 0.14 155);
-  --skin-success-dark: oklch(0.76 0.16 142);
-  --skin-success-subtle-dark: oklch(0.29 0.06 142);
-  --skin-danger-dark: oklch(0.7 0.16 27);
-  --skin-danger-subtle-dark: oklch(0.3 0.08 27);
-  --skin-warning-dark: oklch(0.8 0.13 80);
-  --skin-warning-subtle-dark: oklch(0.31 0.06 80);
+  --skin-ring-dark: oklch(0.76 0.14 155);
+  --skin-success-dark: oklch(0.8 0.16 142);
+  --skin-success-subtle-dark: oklch(0.34 0.06 142);
+  --skin-danger-dark: oklch(0.74 0.16 27);
+  --skin-danger-subtle-dark: oklch(0.35 0.08 27);
+  --skin-warning-dark: oklch(0.83 0.13 80);
+  --skin-warning-subtle-dark: oklch(0.36 0.06 80);
 }

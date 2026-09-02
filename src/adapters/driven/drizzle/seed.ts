@@ -48,21 +48,29 @@ async function main() {
   console.log(`Seeded ${sampleRooms.length} rooms.`);
 
   const { auth } = await import("../better-auth/auth");
-  const { DEV_USER_EMAIL, DEV_USER_PASSWORD, DEV_USER_NAME } = await import(
-    "../better-auth/dev-user"
-  );
-  try {
-    await auth.api.signUpEmail({
-      body: { email: DEV_USER_EMAIL, password: DEV_USER_PASSWORD, name: DEV_USER_NAME },
-    });
-    console.log(`Seeded dev user: ${DEV_USER_EMAIL}`);
-  } catch (err) {
-    /* กลืนเฉพาะเคส "มีบัญชีนี้อยู่แล้ว" — error อื่นต้องดังให้ได้ยิน ไม่ใช่รายงานว่าสำเร็จ */
-    const message = err instanceof Error ? err.message : String(err);
-    if (/exist/i.test(message)) {
-      console.log("Dev user already exists, skipping.");
-    } else {
-      throw err;
+  const { DEV_USERS } = await import("../better-auth/dev-users-config");
+  const { user: userTable } = await import("../drizzle/schema/auth-schema");
+  const { eq } = await import("drizzle-orm");
+
+  for (const devUser of DEV_USERS) {
+    try {
+      await auth.api.signUpEmail({
+        body: { email: devUser.email, password: devUser.password, name: devUser.name },
+      });
+      console.log(`Seeded user: ${devUser.email} (role: ${devUser.role})`);
+    } catch (err) {
+      /* กลืนเฉพาะเคส "มีบัญชีนี้อยู่แล้ว" — error อื่นต้องดังให้ได้ยิน ไม่ใช่รายงานว่าสำเร็จ */
+      const message = err instanceof Error ? err.message : String(err);
+      if (/exist/i.test(message)) {
+        console.log(`User already exists, skipping: ${devUser.email}`);
+      } else {
+        throw err;
+      }
+    }
+
+    // ตั้ง role ตามค่าใน config
+    if (devUser.role !== "user") {
+      await db.update(userTable).set({ role: devUser.role }).where(eq(userTable.email, devUser.email));
     }
   }
 }

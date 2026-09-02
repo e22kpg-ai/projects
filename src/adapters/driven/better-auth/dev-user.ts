@@ -6,6 +6,13 @@
 //   (`grep devpassword123 .next/static/chunks/` เคยเจอไฟล์สาธารณะสองไฟล์)
 //   บรรทัดนี้ทำให้การ import จากฝั่ง client พัง ตอน build แทนที่จะหลุดไปเงียบๆ
 import "server-only";
-export const DEV_USER_EMAIL = "dev@example.com";
-export const DEV_USER_PASSWORD = "devpassword123";
-export const DEV_USER_NAME = "Dev User";
+import { DEV_USERS } from "./dev-users-config";
+
+// สำหรับ server component / action — ใช้ dev user แรก (non-admin)
+export const DEV_USER_EMAIL = DEV_USERS[0].email;
+export const DEV_USER_PASSWORD = DEV_USERS[0].password;
+export const DEV_USER_NAME = DEV_USERS[0].name;
+
+export const DEV_ADMIN_EMAIL = DEV_USERS[1].email;
+export const DEV_ADMIN_PASSWORD = DEV_USERS[1].password;
+export const DEV_ADMIN_NAME = DEV_USERS[1].name;

@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/adapters/driven/better-auth/auth-client";
-import { getDevLoginCredentials } from "@/adapters/driving/actions/dev-auth.actions";
+import {
+  getDevLoginCredentials,
+  getDevAdminLoginCredentials,
+} from "@/adapters/driving/actions/dev-auth.actions";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -53,6 +56,22 @@ export function LoginForm() {
     router.refresh();
   }
 
+  async function handleDevAdminLogin() {
+    setError(null);
+    setPending(true);
+
+    const { email, password } = await getDevAdminLoginCredentials();
+    const { error: signInError } = await authClient.signIn.email({ email, password });
+
+    setPending(false);
+    if (signInError) {
+      setError(signInError.message ?? "เข้าสู่ระบบไม่สำเร็จ (ลองรัน npm run db:seed ก่อน)");
+      return;
+    }
+    router.push("/admin/users");
+    router.refresh();
+  }
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -77,9 +96,14 @@ export function LoginForm() {
       {process.env.NODE_ENV !== "production" && (
         <>
           <p className="text-muted text-sm text-center">— หรือ (เฉพาะ dev) —</p>
-          <Button variant="secondary" disabled={pending} onClick={handleDevLogin} fullWidth>
-            เข้าสู่ระบบด้วยบัญชีทดสอบ (Dev)
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button variant="secondary" disabled={pending} onClick={handleDevLogin} fullWidth>
+              เข้าสู่ระบบ (ผู้ใช้ทั่วไป)
+            </Button>
+            <Button variant="secondary" disabled={pending} onClick={handleDevAdminLogin} fullWidth>
+              เข้าสู่ระบบ (ผู้ดูแลระบบ)
+            </Button>
+          </div>
         </>
       )}
 

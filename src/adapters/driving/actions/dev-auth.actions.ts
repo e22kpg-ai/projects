@@ -36,6 +36,17 @@ export async function getDevLoginCredentials(): Promise<DevCredentials> {
   return { email: DEV_USER_EMAIL, password: DEV_USER_PASSWORD, name: DEV_USER_NAME };
 }
 
+/** คืนบัญชี admin ที่ `npm run db:seed` สร้างไว้ ให้ฟอร์มเอาไปล็อกอินต่อ */
+export async function getDevAdminLoginCredentials(): Promise<DevCredentials> {
+  assertNotProduction();
+
+  const { DEV_ADMIN_EMAIL, DEV_ADMIN_PASSWORD, DEV_ADMIN_NAME } = await import(
+    "@/adapters/driven/better-auth/dev-user"
+  );
+
+  return { email: DEV_ADMIN_EMAIL, password: DEV_ADMIN_PASSWORD, name: DEV_ADMIN_NAME };
+}
+
 /** สร้างบัญชีทดสอบใหม่แบบสุ่ม ไม่ผูกกับบัญชีที่ seed ไว้ */
 export async function getDevSignupCredentials(): Promise<DevCredentials> {
   assertNotProduction();
