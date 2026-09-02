@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MAX_AFFILIATION_LENGTH } from "@/core/domain/account-rules";
 import { runAsAdminProvisioning } from "./provisioning-context";
 import { ORGANISATION_EMAIL_DOMAIN } from "./signup-policy";
-import { signupRejection } from "./signup-validation";
+import { normalizeAffiliation, signupRejection } from "./signup-validation";
 
 /*
  * ด่านนี้เป็นที่เดียวที่กันการสมัครมั่วได้จริง — ฟอร์มกันได้แค่คนที่เดินผ่านหน้าเว็บ
@@ -119,5 +119,29 @@ describe("signupRejection", () => {
       );
       expect(afterScope?.error).toBe("email_domain_not_allowed");
     });
+  });
+});
+
+/*
+ * การตรวจกับการทำความสะอาดเป็นคนละหน้าที่ — signupRejection ตัดสินว่ารับไหม
+ * ส่วนตัวนี้ตัดสินว่าเก็บหน้าตาไหน เทสต์แยกกันเพื่อให้เห็นว่าไม่ได้ปนกัน
+ */
+describe("normalizeAffiliation", () => {
+  it("ตัดช่องว่างหัวท้ายที่ยิงตรงมาจาก API", () => {
+    expect(normalizeAffiliation("  กรมยุทธการทหาร  ")).toBe("กรมยุทธการทหาร");
+  });
+
+  it("ค่าที่สะอาดอยู่แล้วต้องไม่ถูกเปลี่ยน", () => {
+    expect(normalizeAffiliation("กรมยุทธการทหาร")).toBe("กรมยุทธการทหาร");
+  });
+
+  /* ★ ไม่แปลงค่าที่ใช้ไม่ได้ให้กลายเป็นค่าที่ใช้ได้ — หน้าที่ปฏิเสธเป็นของ signupRejection */
+  it("ค่าที่ใช้ไม่ได้ต้องกลายเป็นสตริงว่าง ให้ด่านตรวจปฏิเสธต่อ", () => {
+    expect(normalizeAffiliation("   ")).toBe("");
+    expect(normalizeAffiliation(undefined)).toBe("");
+    expect(normalizeAffiliation(null)).toBe("");
+    expect(normalizeAffiliation(42)).toBe("");
+    expect(signupRejection({ email: ORG_EMAIL, affiliation: normalizeAffiliation("   ") }, CREATE)
+      ?.error).toBe("invalid_affiliation");
   });
 });

@@ -86,3 +86,20 @@ export function signupRejection(
 
   return undefined;
 }
+
+/**
+ * ค่าที่ควรถูกเก็บลงคอลัมน์ `affiliation` จริงๆ
+ *
+ * ★ ฟอร์มสมัคร trim ให้ก่อนส่งอยู่แล้ว แต่นั่นกันได้แค่คนที่เดินผ่านหน้าเว็บ
+ *   /api/auth/sign-up/email ยิงตรงได้ ส่ง "  กรมยุทธการทหาร  " มาก็ผ่าน signupRejection
+ *   (เพราะ affiliationProblem trim ก่อนตรวจ) แล้วช่องว่างจะถูกเก็บลงฐานข้อมูลไปด้วย
+ *
+ *   ไม่ใช่ช่องโหว่ แต่เป็นข้อมูลสกปรกที่แก้ทีหลังยาก — ค่าที่ดูเหมือนกันบนหน้าจอ
+ *   จะไม่เท่ากันเวลาเอาไปจัดกลุ่มหรือเทียบ แล้วรายงานจะมี "กรมยุทธการทหาร" สองแถว
+ *
+ * ★ รับ unknown เพราะมาจาก request ที่ยังไม่ถูกตรวจ ค่าที่ไม่ใช่ string คืนสตริงว่าง
+ *   ให้ signupRejection เป็นคนปฏิเสธ ไม่ใช่มาตัดสินใจซ้ำสองที่
+ */
+export function normalizeAffiliation(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/adapters/driven/drizzle/client";
 import * as schema from "@/adapters/driven/drizzle/schema/schema";
-import { signupRejection } from "./signup-validation";
+import { normalizeAffiliation, signupRejection } from "./signup-validation";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite", schema }),
@@ -68,5 +68,24 @@ export const auth = betterAuth({
      * คืน { error } เพื่อปฏิเสธ (better-auth ตอบ 403) คืน undefined เพื่อปล่อยผ่าน
      */
     validateUserInfo: async ({ user, source }) => signupRejection(user, source),
+  },
+
+  /*
+   * ทำความสะอาดค่าก่อนเขียนลงฐานข้อมูล
+   *
+   * ★ แยกหน้าที่กับ validateUserInfo ให้ชัด: ตรงนั้นตัดสินว่า "รับหรือไม่รับ"
+   *   ส่วนตรงนี้ตัดสินว่า "ถ้ารับแล้วจะเก็บหน้าตาแบบไหน" — ปนกันเมื่อไหร่จะเริ่มมี
+   *   การแก้ค่าซ่อนอยู่ในด่านตรวจ ซึ่งอ่านโค้ดแล้วไม่มีทางเดา
+   *
+   *   hook นี้ทำงานตอนสร้างบัญชีเท่านั้น บัญชีเดิมในระบบจึงไม่ถูกแตะ
+   */
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => ({
+          data: { ...user, affiliation: normalizeAffiliation(user.affiliation) },
+        }),
+      },
+    },
   },
 });
