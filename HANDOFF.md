@@ -19,18 +19,19 @@
 |---|---|
 | `npm run typecheck` | ✅ ผ่าน |
 | `npm run test` (vitest) | ✅ 4 ไฟล์ / 48 เทสต์ ผ่านหมด |
-| `npm run lint` | ⚠️ **error 3 ตัว** มาจาก `_verify.tmp.js` ไฟล์เดียว |
+| `npm run lint` | ✅ ผ่าน 0 error (ตั้งแต่ commit `334d6f4`) |
 | `npm run build` | ผ่าน (ตรวจครั้งล่าสุดก่อนงานรอบหลัง) |
 
-### ⚠️ เรื่องที่ต้องจัดการก่อนอย่างอื่น
+### ✅ เรื่องที่เคลียร์ไปแล้ว (2 ก.ย. 2569 — เดิมเป็นหัวข้อ "ต้องจัดการก่อนอย่างอื่น")
 
-1. **`_verify.tmp.js` ที่ root** — สคริปต์ Playwright ชั่วคราวสำหรับตรวจ UI ยังค้างอยู่ใน working tree
-   เป็นต้นเหตุของ lint error ทั้ง 3 ตัว (`no-require-imports`)
-   → ถ้ายังใช้อยู่ให้ย้ายเข้า `scripts/` แล้วเพิ่มใน eslint ignore หรือถ้าใช้เสร็จแล้วก็ลบทิ้ง
-2. **working tree มีของค้างเยอะมาก** — ไฟล์ modified ~35 ตัว + untracked อีกชุด
-   รวมถึง migration ใหม่ (`drizzle/migrations/0002_nice_manta.sql`) และ `.github/workflows/ci.yml`
-   → **ควรรีวิวแล้ว commit เป็นก้อนๆ ก่อนเริ่มงานใหม่** ไม่งั้นแยกไม่ออกว่าอะไรเป็นของงานไหน
-3. **`.env.example` ถูกแก้โดยไม่ได้มาจากงาน UI** (เพิ่มคอมเมนต์อธิบาย Turso/Better Auth) — เช็คว่าตั้งใจก่อน commit
+1. **`_verify.tmp.js` ที่ root** → ย้ายเป็น `scripts/e2e-smoke.mjs` แปลง `require()` เป็น ESM
+   (lint เขียวโดยไม่ต้องใส่ ignore) ผูก `npm run test:e2e` ให้แล้ว และลง `playwright` เป็น devDependency
+   จริงๆ (ก่อนหน้านี้มีแต่ใน `node_modules` ไม่มีใน `package.json` — repo สะอาดๆ รันไม่ได้)
+   สคริปต์ต้องรันคู่กับ `npm run dev` ที่เปิดค้างไว้ และ **เขียนของจริงลง DB** ใช้กับ dev DB เท่านั้น
+   สกรีนช็อตลง `.e2e-shots/` (gitignore แล้ว) รายละเอียดอยู่ในหัวข้อ Tests ของ README
+2. **working tree ที่ค้าง ~35 ไฟล์** → ถูก commit ไปหมดแล้วใน `1de68a8` รวมทั้ง
+   `.github/workflows/ci.yml`, `.env.example` และ migration `0002_nice_manta.sql`
+   ตอนนี้ working tree สะอาด
 
 ---
 
@@ -120,7 +121,7 @@
 
 | ลำดับ | งาน |
 |---|---|
-| 1 | เคลียร์ `_verify.tmp.js` ให้ lint เขียว แล้ว commit working tree เป็นก้อนๆ |
+| ~~1~~ | ✅ **เสร็จแล้ว** (`334d6f4`) — `_verify.tmp.js` ย้ายเป็น `scripts/e2e-smoke.mjs` lint เขียว working tree สะอาด ดูหัวข้อ 2 |
 | 2 | **ตรวจ UI ด้วยตาจริง** — ยังไม่เคยทำ: เปิด `/styleguide` ไล่ 6 combination (skin corporate/forest × สว่าง/มืด/ตามระบบ) ดู contrast, focus ring, focus trap ของ Modal, DatePicker กดลูกศรข้ามเดือน |
 | 3 | หน้า admin (`/admin/rooms`, `/admin/users`) ยังไม่ได้ผ่านรอบ redesign — ยังใช้ component เดิมอยู่บ้างหรือเปล่าต้องเช็ค |
 | 4 | ยังไม่มีเทสต์ฝั่ง component (vitest ตั้งเป็น `environment: "node"` ไม่มี jsdom) — ถ้าจะเทสต์ Select/DatePicker ต้องเพิ่ม jsdom + testing-library ก่อน |
