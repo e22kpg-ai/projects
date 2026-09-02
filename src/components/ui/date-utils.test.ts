@@ -9,6 +9,7 @@ import {
   isBefore,
   isOutOfRange,
   parseISODate,
+  safeISODateParam,
   toISODate,
 } from "./date-utils";
 
@@ -106,5 +107,40 @@ describe("การแสดงผลปี พ.ศ.", () => {
   it("ค่าที่ส่งต่อในระบบยังเป็น ค.ศ. เสมอ — พ.ศ. ต้องไม่รั่วออกมา", () => {
     expect(addDays("2026-09-02", 1)).toBe("2026-09-03");
     expect(toISODate(parseISODate("2026-09-02"))).toBe("2026-09-02");
+  });
+});
+
+describe("safeISODateParam", () => {
+  const FALLBACK = "2026-09-02";
+
+  it("ปล่อยผ่านวันที่ที่ถูกต้อง", () => {
+    expect(safeISODateParam("2026-12-31", FALLBACK)).toBe("2026-12-31");
+    expect(safeISODateParam("2028-02-29", FALLBACK)).toBe("2028-02-29");
+  });
+
+  it("ไม่ส่งค่ามาเลยก็ได้ค่าตั้งต้น", () => {
+    expect(safeISODateParam(undefined, FALLBACK)).toBe(FALLBACK);
+    expect(safeISODateParam("", FALLBACK)).toBe(FALLBACK);
+  });
+
+  /*
+   * สองค่านี้เคยทำให้หน้า /calendar ล่มทั้งหน้ามาก่อน
+   * เพราะกลายเป็น Invalid Date แล้ว NaN ไหลลงไปถึงชั้น query
+   */
+  it.each(["abc", "2026-13-45", "9999-99-99", "2026-9-2", "2026/09/02", "'; DROP TABLE bookings; --"])(
+    "ค่าที่ไม่ใช่วันที่ (%s) ต้องตกกลับเป็นค่าตั้งต้น ไม่ใช่พัง",
+    (raw) => {
+      expect(safeISODateParam(raw, FALLBACK)).toBe(FALLBACK);
+    },
+  );
+
+  /* ผ่าน regex แต่ไม่มีอยู่จริง — Date จะเลื่อนไปวันถัดไปเงียบๆ ถ้าไม่ดัก */
+  it.each([
+    ["2026-02-30", "ก.พ. ไม่มีวันที่ 30"],
+    ["2026-02-29", "2026 ไม่ใช่ปีอธิกสุรทิน"],
+    ["2026-04-31", "เม.ย. มี 30 วัน"],
+    ["2026-00-10", "ไม่มีเดือน 0"],
+  ])("วันที่ที่ไม่มีอยู่จริง (%s) ต้องไม่ถูกเลื่อนเงียบๆ", (raw) => {
+    expect(safeISODateParam(raw, FALLBACK)).toBe(FALLBACK);
   });
 });
