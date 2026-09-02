@@ -3,7 +3,7 @@ import { ForbiddenError, InvalidRoomError, RoomNotFoundError } from "@/core/doma
 import { MAX_ROOM_CAPACITY } from "@/core/domain/room-rules";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
-import type { UserRepository } from "@/core/ports/user-repository.port";
+import type { AppUser, UserRepository } from "@/core/ports/user-repository.port";
 import { makeCreateRoom } from "./create-room.use-case";
 import { makeUpdateRoom } from "./update-room.use-case";
 import { makeDeleteRoom } from "./delete-room.use-case";
@@ -15,8 +15,9 @@ import { makeSetUserRole } from "./set-user-role.use-case";
  * เทสต์ชุดนี้มีไว้กันวันที่มีคน copy ไฟล์ที่หกไปโดยลืมการ์ดติดไปด้วย
  */
 
-const admin: AuthenticatedUser = { id: "admin-1", name: "Admin", email: "a@x.com", role: "admin" };
-const normalUser: AuthenticatedUser = { id: "user-1", name: "User", email: "u@x.com", role: "user" };
+const approved = { status: "approved", affiliation: "กองบัญชาการ" } as const;
+const admin: AuthenticatedUser = { id: "admin-1", name: "Admin", email: "a@x.com", role: "admin", ...approved };
+const normalUser: AuthenticatedUser = { id: "user-1", name: "User", email: "u@x.com", role: "user", ...approved };
 
 const room = {
   id: "room-1",
@@ -40,10 +41,23 @@ function roomRepo(): RoomRepository {
 }
 
 function userRepo(): UserRepository {
+  const row = (id: string, over: Partial<AppUser> = {}): AppUser => ({
+    id,
+    name: "N",
+    email: "e@x.com",
+    role: "user",
+    status: "pending",
+    affiliation: null,
+    createdAt: new Date("2026-09-01T00:00:00"),
+    ...over,
+  });
+
   return {
     findAll: vi.fn(async () => []),
-    findById: vi.fn(async () => undefined),
-    updateRole: vi.fn(async (id, role) => ({ id, name: "N", email: "e@x.com", role })),
+    findById: vi.fn(async (id: string) => row(id)),
+    updateRole: vi.fn(async (id, role) => row(id, { role })),
+    updateStatus: vi.fn(async (id, status) => row(id, { status })),
+    delete: vi.fn(async () => {}),
   };
 }
 

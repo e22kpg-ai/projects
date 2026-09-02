@@ -17,18 +17,24 @@ const owner: AuthenticatedUser = {
   name: "เจ้าของการจอง",
   email: "owner@example.com",
   role: "user",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
 };
 const stranger: AuthenticatedUser = {
   id: "user-2",
   name: "คนอื่น",
   email: "other@example.com",
   role: "user",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
 };
 const admin: AuthenticatedUser = {
   id: "user-3",
   name: "ผู้ดูแลระบบ",
   email: "admin@example.com",
   role: "admin",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
 };
 
 /** การจองที่ยังมาไม่ถึง (15:00–16:00 ของวันเดียวกัน) */

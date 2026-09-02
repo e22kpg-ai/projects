@@ -1,5 +1,5 @@
 import { getCalendarData } from "@/adapters/driving/queries/calendar.queries";
-import { requireUser } from "@/adapters/driving/queries/session.queries";
+import { requireApprovedUser } from "@/adapters/driving/queries/session.queries";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { NavBar } from "@/components/layout/NavBar";
 import { safeISODateParam, todayISO } from "@/components/ui/date-utils";
@@ -9,7 +9,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ date?: string; room?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireApprovedUser();
 
   const params = await searchParams;
   /*

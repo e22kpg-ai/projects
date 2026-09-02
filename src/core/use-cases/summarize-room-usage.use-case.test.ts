@@ -15,12 +15,16 @@ const admin: AuthenticatedUser = {
   name: "ผู้ดูแล",
   email: "a@x.com",
   role: "admin",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
 };
 const normalUser: AuthenticatedUser = {
   id: "user-1",
   name: "ผู้ใช้",
   email: "u@x.com",
   role: "user",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
 };
 
 const room: Room = {

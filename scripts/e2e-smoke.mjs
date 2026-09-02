@@ -5,7 +5,8 @@
  *   npm run test:e2e     # อีกเทอร์มินัลหนึ่ง
  *
  * ต้องมีเบราว์เซอร์ของ Playwright ในเครื่องก่อน: npx playwright install chromium
- * และต้อง seed ฐานข้อมูลก่อน (npm run db:seed) เพราะส่วน admin ล็อกอินด้วยบัญชีที่ seed สร้างไว้
+ * และต้อง migrate + seed ฐานข้อมูลก่อน (npm run db:migrate && npm run db:seed)
+ * เพราะส่วน admin ล็อกอินด้วยบัญชีที่ seed สร้างไว้ และ seed เป็นตัวตั้งสถานะให้เป็น approved
  * ถ้ารันซ้ำหลายรอบจนการจองใน seed หมด ให้ล้างแล้ว seed ใหม่: npm run db:seed -- --reset
  * สคริปต์นี้เขียนของจริงลง DB (สมัครผู้ใช้ใหม่ สร้าง/ลบห้อง จองจริง) — ใช้กับ dev DB เท่านั้น
  */
@@ -88,8 +89,107 @@ async function main() {
 
   await signupPage.goto(`${BASE}/signup`);
   await signupPage.click("text=สมัครบัญชีทดสอบใหม่ทันที (Dev)");
-  await signupPage.waitForURL(`${BASE}/rooms`, { timeout: 90000 });
-  ok("dev signup works (server action path, no bundled credentials)");
+  await signupPage.waitForURL(`${BASE}/pending`, { timeout: 90000 });
+  ok("dev signup works and lands on /pending (new accounts start unapproved)");
+
+  /*
+   * ★ ด่านสำคัญที่สุดของฟีเจอร์อนุมัติ: คนที่ยังไม่ถูกอนุมัติต้องเข้าหน้าที่มีข้อมูลจริงไม่ได้
+   *   ถ้าข้อนี้พัง แปลว่าใครก็ตามที่สมัครเข้ามาเห็นตารางประชุมทั้งองค์กรได้ทันที
+   */
+  await signupPage.goto(`${BASE}/rooms`);
+  await signupPage.waitForURL(/\/pending/, { timeout: 30000 }).catch(() => {});
+  if (signupPage.url().includes("/pending")) ok("unapproved account is bounced off /rooms");
+  else fail(`unapproved account reached ${signupPage.url()}`);
+
+  await signupPage.goto(`${BASE}/calendar`);
+  await signupPage.waitForURL(/\/pending/, { timeout: 30000 }).catch(() => {});
+  if (signupPage.url().includes("/pending")) ok("unapproved account is bounced off /calendar");
+  else fail(`unapproved account reached ${signupPage.url()}`);
+
+  await shot(signupPage, "08-pending-approval");
+
+  /*
+   * ★ ยิงตรงที่ endpoint ไม่ผ่านฟอร์ม
+   *
+   *   /api/auth/sign-up/email เปิดสาธารณะ การตรวจโดเมนในฟอร์มกันได้แค่คนที่เดินผ่านหน้าเว็บ
+   *   ข้อนี้พิสูจน์ว่า validateUserInfo ใน auth.ts กันถึงระดับ endpoint จริง
+   *
+   * ★ ต้องใช้ context ใหม่ที่ไม่มี cookie และต้องใส่ header Origin ด้วย
+   *   ถ้ายิงจาก context ที่ล็อกอินอยู่โดยไม่มี Origin better-auth จะตอบ 403
+   *   MISSING_OR_NULL_ORIGIN (ด่าน CSRF) ซึ่ง "หน้าตาเหมือนผ่าน" ทั้งที่กฎโดเมน
+   *   ไม่เคยถูกเรียกเลย — เคยพลาดมาแล้วตอนเขียนเทสต์นี้ครั้งแรก
+   *
+   * ★ และต้องเช็ค code ในเนื้อคำตอบ ไม่ใช่แค่ status 403 ด้วยเหตุผลเดียวกัน:
+   *   403 มาได้จากหลายสาเหตุ เทสต์ที่ดูแค่ตัวเลขจะผ่านแม้กฎที่ต้องการทดสอบจะถูกลบทิ้งไปแล้ว
+   */
+  const apiCtx = await browser.newContext();
+  const apiHeaders = { "Content-Type": "application/json", Origin: BASE };
+
+  const outsider = await apiCtx.request.post(`${BASE}/api/auth/sign-up/email`, {
+    headers: apiHeaders,
+    data: {
+      email: `outsider+${Date.now()}@gmail.com`,
+      password: "outsider-password-123",
+      name: "คนนอกองค์กร",
+      affiliation: "ไม่มีสังกัด",
+    },
+    failOnStatusCode: false,
+  });
+  const outsiderBody = await outsider.json().catch(() => ({}));
+  if (outsider.status() === 403 && outsiderBody.code === "email_domain_not_allowed") {
+    ok("signup endpoint rejects an outside email domain by the domain rule itself");
+  } else {
+    fail(
+      `outside domain not rejected by the domain rule: HTTP ${outsider.status()} code=${outsiderBody.code}`,
+    );
+  }
+
+  /* โดเมนขององค์กรต้องยังผ่านได้ ไม่ใช่ปิดตายทุกอย่าง */
+  const insider = await apiCtx.request.post(`${BASE}/api/auth/sign-up/email`, {
+    headers: apiHeaders,
+    data: {
+      email: `e2e+${Date.now()}@rtarf.mi.th`,
+      password: "insider-password-123",
+      name: "คนในองค์กร",
+      affiliation: "กรมยุทธการทหาร",
+    },
+    failOnStatusCode: false,
+  });
+  const insiderBody = await insider.json().catch(() => ({}));
+  if (insider.status() >= 200 && insider.status() < 300) {
+    /* ★ บัญชีที่สมัครผ่าน endpoint ตรงๆ ก็ต้องเป็น pending ห้ามอนุมัติตัวเองได้ */
+    if (insiderBody.user?.status === "pending") {
+      ok("organisation domain is accepted and the new account starts as pending");
+    } else {
+      fail(`new account did not start pending: status=${insiderBody.user?.status}`);
+    }
+  } else {
+    fail(`organisation domain was rejected: HTTP ${insider.status()} code=${insiderBody.code}`);
+  }
+
+  /* ★ ส่ง status มาเองต้องไม่มีผล — additionalFields ตั้ง input:false ไว้ */
+  const selfApprove = await apiCtx.request.post(`${BASE}/api/auth/sign-up/email`, {
+    headers: apiHeaders,
+    data: {
+      email: `sneaky+${Date.now()}@rtarf.mi.th`,
+      password: "sneaky-password-123",
+      name: "คนที่พยายามอนุมัติตัวเอง",
+      affiliation: "กรมยุทธการทหาร",
+      status: "approved",
+      role: "admin",
+    },
+    failOnStatusCode: false,
+  });
+  const sneakyBody = await selfApprove.json().catch(() => ({}));
+  if (sneakyBody.user?.status === "pending" && sneakyBody.user?.role === "user") {
+    ok("status and role sent in the signup body are ignored (no self-approval, no self-promotion)");
+  } else {
+    fail(
+      `signup body overrode privileged fields: status=${sneakyBody.user?.status} role=${sneakyBody.user?.role}`,
+    );
+  }
+  await apiCtx.close();
+
   await signupCtx.close();
 
   // ---------- admin ----------
@@ -217,8 +317,41 @@ async function main() {
 
   await user.goto(`${BASE}/signup`);
   await user.click("text=สมัครบัญชีทดสอบใหม่ทันที (Dev)");
-  await user.waitForURL(`${BASE}/rooms`, { timeout: 90000 });
-  ok("non-admin signup works");
+  await user.waitForURL(`${BASE}/pending`, { timeout: 90000 });
+  ok("non-admin signup works and starts unapproved");
+
+  /*
+   * ★ วงจรอนุมัติแบบครบรอบ: สมัคร -> ถูกกั้น -> admin อนุมัติ -> ใช้งานได้
+   *
+   *   ต้องอนุมัติที่นี่ ไม่งั้นเทสต์จองห้องข้างล่างจะพังทั้งหมด ซึ่งก็ถูกต้องแล้ว
+   *   เพราะบัญชีใหม่จองไม่ได้จริงๆ จนกว่าจะมีคนอนุมัติ
+   *
+   *   อนุมัติทุกบัญชี @example.local ที่ค้างอยู่ ไม่เจาะจงคนใดคนหนึ่ง เพราะอีเมลของ
+   *   ปุ่ม dev สุ่มมาทุกครั้ง และรอบก่อนๆ อาจทิ้งบัญชีค้างไว้ด้วย
+   *   ต้อง goto ใหม่ทุกรอบเพราะ revalidatePath ทำให้ทั้งรายการถูกเรนเดอร์ใหม่
+   */
+  let approvedCount = 0;
+  for (let i = 0; i < 12; i++) {
+    await admin.goto(`${BASE}/admin/users`);
+    await admin.waitForSelector("text=จัดการสิทธิ์ผู้ใช้", { timeout: 30000 });
+    const approveBtn = admin
+      .locator('li:has-text("@example.local") button:has-text("อนุมัติ")')
+      .first();
+    if ((await approveBtn.count()) === 0) break;
+    await approveBtn.click();
+    await admin.waitForTimeout(1500);
+    approvedCount++;
+  }
+  if (approvedCount > 0) ok(`admin approved ${approvedCount} pending account(s)`);
+  else fail("no pending account was available for the admin to approve");
+
+  await shot(admin, "09-approve-users");
+
+  /* หลังอนุมัติแล้วต้องเข้า /rooms ได้ทันทีโดยไม่ต้องล็อกอินใหม่ */
+  await user.goto(`${BASE}/rooms`);
+  await user.waitForSelector("text=ห้องประชุม", { timeout: 30000 }).catch(() => {});
+  if (user.url().includes("/rooms")) ok("approved account can reach /rooms without re-login");
+  else fail(`approved account was still bounced to ${user.url()}`);
 
   if ((await user.locator('nav a:has-text("ผู้ดูแลระบบ")').count()) === 0)
     ok("non-admin sees no admin nav link");

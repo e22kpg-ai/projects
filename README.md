@@ -29,9 +29,32 @@ Next.js (App Router) + Turso (libSQL) + Drizzle ORM + Better Auth + Tailwind CSS
    npm run dev
    ```
 
+## Accounts and access
+
+Signing up is restricted twice over:
+
+1. **Email domain** — only `@rtarf.mi.th` addresses may register. Enforced in
+   `user.validateUserInfo` inside `src/adapters/driven/better-auth/auth.ts`, which sits on the
+   path every signup takes, so `POST /api/auth/sign-up/email` is covered too, not just the form.
+   Outside production the allowlist also accepts `example.com` and `example.local` so the seeded
+   and throwaway dev accounts keep working (see `signup-policy.ts`).
+2. **Admin approval** — every new account starts at `status: "pending"`. Pending users can sign in
+   and see `/pending`, but nothing else: pages redirect, and `createBooking`/`cancelBooking` reject
+   them in the use-case, which is the gate that matters since Server Actions can be called directly.
+
+Admins approve, revoke, or reject (delete) accounts at `/admin/users`, where pending accounts are
+listed first. Nobody can change their own role or status — that would let the last admin lock
+everyone out of the page that fixes it.
+
+Signup also collects **สังกัด** (affiliation) as free text, shown to admins while they decide.
+
+> Migration `0003` adds these columns and backfills every pre-existing account to `approved`.
+> Without that backfill the ADD COLUMN default would stamp `pending` on everyone, including the
+> only admin, and lock the whole organisation out on deploy.
+
 ## Dev quick login
 
-`npm run db:seed` also seeds a local-only account, `dev@example.com` / `devpassword123`. On `/login` and `/signup`, a dev-only button (below the real form) signs in as that account or spins up a fresh throwaway account in one click — both are gated by `process.env.NODE_ENV !== "production"`, so they're not present in a production build.
+`npm run db:seed` also seeds two local-only accounts, `dev@example.com` / `devpassword123` and `admin@example.com` / `adminpassword123`, both already approved. On `/login` and `/signup`, a dev-only button (below the real form) signs in as that account or spins up a fresh throwaway account in one click — both are gated by `process.env.NODE_ENV !== "production"`, so they're not present in a production build.
 
 ## Project structure
 

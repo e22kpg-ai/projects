@@ -72,6 +72,8 @@ export async function createBookingAction(
 
   try {
     await container.createBooking({
+      /* use-case ต้องรู้ว่าใครกด เพื่อเช็คว่าบัญชีถูกอนุมัติแล้วหรือยัง ไม่ใช่แค่จะบันทึกเป็นของใคร */
+      actingUser: user,
       roomId,
       userId: user.id,
       title,

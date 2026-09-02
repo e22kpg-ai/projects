@@ -13,6 +13,8 @@ import { makeUpdateRoom } from "@/core/use-cases/update-room.use-case";
 import { makeDeleteRoom } from "@/core/use-cases/delete-room.use-case";
 import { makeListUsers } from "@/core/use-cases/list-users.use-case";
 import { makeSetUserRole } from "@/core/use-cases/set-user-role.use-case";
+import { makeSetUserStatus } from "@/core/use-cases/set-user-status.use-case";
+import { makeDeleteUser } from "@/core/use-cases/delete-user.use-case";
 
 const roomRepository = new DrizzleRoomRepository();
 const bookingRepository = new DrizzleBookingRepository();
@@ -46,4 +48,6 @@ export const container = {
   deleteRoom: makeDeleteRoom({ rooms: roomRepository }),
   listUsers: makeListUsers({ users: userRepository }),
   setUserRole: makeSetUserRole({ users: userRepository }),
+  setUserStatus: makeSetUserStatus({ users: userRepository }),
+  deleteUser: makeDeleteUser({ users: userRepository }),
 };

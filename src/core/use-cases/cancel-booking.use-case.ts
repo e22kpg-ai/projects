@@ -1,4 +1,6 @@
+import { isApproved } from "@/core/domain/account-rules";
 import {
+  AccountPendingError,
   BookingAlreadyEndedError,
   BookingNotFoundError,
   ForbiddenError,
@@ -20,7 +22,7 @@ export interface CancelBookingInput {
 /*
  * ยกเลิกการจอง — เจ้าของการจองหรือ admin เท่านั้น
  *
- * ★ ลำดับการตรวจสำคัญ: เช็ค "มีจริงไหม" ก่อน "มีสิทธิ์ไหม" ก่อน "ยกเลิกทันไหม"
+ * ★ ลำดับการตรวจสำคัญ: "อนุมัติแล้วไหม" ก่อน แล้วจึง "มีจริงไหม" → "มีสิทธิ์ไหม" → "ยกเลิกทันไหม"
  *   ถ้าสลับเอา ForbiddenError ขึ้นก่อน คนที่ไม่มีสิทธิ์จะแยกออกทันทีว่า id ไหนมีอยู่จริง
  *   จากข้อความ error ที่ต่างกัน กลายเป็นช่องให้ไล่เดา id ได้
  *
@@ -30,6 +32,11 @@ export interface CancelBookingInput {
  */
 export function makeCancelBooking(deps: CancelBookingDeps) {
   return async function cancelBooking(input: CancelBookingInput): Promise<void> {
+    /* บัญชีที่ยังไม่ถูกอนุมัติแตะข้อมูลจริงไม่ได้เลย รวมถึงการลบ — เช็คก่อนทุกอย่าง */
+    if (!isApproved(input.actingUser)) {
+      throw new AccountPendingError();
+    }
+
     const booking = await deps.bookings.findById(input.bookingId);
     if (!booking) {
       throw new BookingNotFoundError();

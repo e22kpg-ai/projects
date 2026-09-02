@@ -178,7 +178,12 @@ async function main() {
   for (const devUser of DEV_USERS) {
     try {
       await auth.api.signUpEmail({
-        body: { email: devUser.email, password: devUser.password, name: devUser.name },
+        body: {
+          email: devUser.email,
+          password: devUser.password,
+          name: devUser.name,
+          affiliation: devUser.affiliation,
+        },
       });
       console.log(`Seeded user: ${devUser.email} (role: ${devUser.role})`);
     } catch (err) {
@@ -191,10 +196,17 @@ async function main() {
       }
     }
 
-    // ตั้ง role ตามค่าใน config
-    if (devUser.role !== "user") {
-      await db.update(userTable).set({ role: devUser.role }).where(eq(userTable.email, devUser.email));
-    }
+    /*
+     * ตั้ง role ตามค่าใน config และอนุมัติให้เลย
+     *
+     * ★ ต้องเซ็ต status ทุกครั้ง ไม่ใช่เฉพาะตอนสร้างใหม่ — บัญชีใหม่เกิดมาเป็น 'pending'
+     *   เสมอตาม default ของตาราง ถ้าไม่อัปเดตตรงนี้ ปุ่มล็อกอิน dev จะพาไปหน้ารออนุมัติ
+     *   ทั้งที่ยังไม่มี admin คนไหนในระบบจะมาอนุมัติให้ได้เลย
+     */
+    await db
+      .update(userTable)
+      .set({ role: devUser.role, status: "approved", affiliation: devUser.affiliation })
+      .where(eq(userTable.email, devUser.email));
   }
 
   /*

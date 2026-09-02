@@ -2,8 +2,12 @@
 
 import { useActionState, useState } from "react";
 import {
+  deleteUserAction,
   setUserRoleAction,
+  setUserStatusAction,
+  type DeleteUserFormState,
   type SetUserRoleFormState,
+  type SetUserStatusFormState,
 } from "@/adapters/driving/actions/user-admin.actions";
 import type { Role } from "@/core/ports/auth-service.port";
 import type { AppUser } from "@/core/ports/user-repository.port";
@@ -11,7 +15,9 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
-const initialState: SetUserRoleFormState = {};
+const initialRoleState: SetUserRoleFormState = {};
+const initialStatusState: SetUserStatusFormState = {};
+const initialDeleteState: DeleteUserFormState = {};
 
 const ROLE_OPTIONS = [
   { value: "user", label: "ผู้ใช้ทั่วไป" },
@@ -24,7 +30,18 @@ const ROLE_LABELS: Record<Role, string> = {
 };
 
 function UserRoleRow({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
-  const [state, formAction, pending] = useActionState(setUserRoleAction, initialState);
+  const [state, formAction, pending] = useActionState(setUserRoleAction, initialRoleState);
+  const [statusState, statusAction, statusPending] = useActionState(
+    setUserStatusAction,
+    initialStatusState,
+  );
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteUserAction,
+    initialDeleteState,
+  );
+
+  /* ปฏิเสธคือการลบถาวร จึงต้องยืนยันสองจังหวะเหมือนการยกเลิกการจอง */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   /*
    * controlled ไม่ใช่ defaultValue
@@ -54,40 +71,119 @@ function UserRoleRow({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
   }
 
   const dirty = selected !== user.role;
+  const approved = user.status === "approved";
+  const busy = pending || statusPending || deletePending;
 
   return (
-    <li className="card-flat flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="font-medium truncate">{user.name}</p>
-        <p className="text-muted text-sm truncate">{user.email}</p>
+    <li className="card-flat flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-medium truncate">{user.name}</p>
+          <p className="text-muted text-sm truncate">{user.email}</p>
+          <p className="text-muted text-sm truncate">
+            สังกัด: {user.affiliation ?? <span className="text-muted">ไม่ได้ระบุ</span>}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={approved ? "badge-success badge-dot" : "badge-warning badge-dot"}>
+            {approved ? "ใช้งานได้" : "รออนุมัติ"}
+          </span>
+          {isSelf && <span className="badge">บัญชีของคุณ</span>}
+        </div>
       </div>
 
       {isSelf ? (
-        <div className="flex flex-col items-start gap-1 sm:items-end">
+        /*
+         * ★ ตัวเองแก้อะไรไม่ได้เลย ทั้ง role และสถานะ
+         *   admin คนสุดท้ายที่เผลอเพิกถอนหรือลบตัวเอง จะล็อกทุกคนออกจากหน้านี้ถาวร
+         *   ทางกลับมีทางเดียวคือไปแก้ที่ฐานข้อมูลตรงๆ
+         */
+        <div className="flex flex-col items-start gap-1">
           <span className="badge">{ROLE_LABELS[user.role]}</span>
-          <span className="text-muted text-xs">ไม่สามารถเปลี่ยนสิทธิ์ของตัวเองได้</span>
+          <span className="text-muted text-xs">ไม่สามารถเปลี่ยนสิทธิ์หรือสถานะของตัวเองได้</span>
         </div>
       ) : (
-        <form action={formAction} className="flex flex-col items-start gap-2 sm:items-end">
-          <input type="hidden" name="userId" value={user.id} />
+        <div className="flex flex-col gap-3 border-t border-border pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <form action={formAction} className="flex flex-wrap items-center gap-2">
+              <input type="hidden" name="userId" value={user.id} />
+              <SegmentedControl
+                name="role"
+                options={ROLE_OPTIONS}
+                value={selected}
+                onValueChange={setSelected}
+                aria-label={`สิทธิ์ของ ${user.name}`}
+              />
+              {dirty && (
+                <Button type="submit" size="sm" loading={pending}>
+                  บันทึก
+                </Button>
+              )}
+            </form>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <SegmentedControl
-              name="role"
-              options={ROLE_OPTIONS}
-              value={selected}
-              onValueChange={setSelected}
-              aria-label={`สิทธิ์ของ ${user.name}`}
-            />
-            {dirty && (
-              <Button type="submit" size="sm" loading={pending}>
-                บันทึก
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <form action={statusAction}>
+                <input type="hidden" name="userId" value={user.id} />
+                <input type="hidden" name="status" value={approved ? "pending" : "approved"} />
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant={approved ? "secondary" : "primary"}
+                  loading={statusPending}
+                  disabled={busy}
+                >
+                  {approved ? "เพิกถอนสิทธิ์" : "อนุมัติ"}
+                </Button>
+              </form>
+
+              {/*
+                ปุ่มปฏิเสธโผล่เฉพาะบัญชีที่ยังรออนุมัติ
+                บัญชีที่ใช้งานอยู่แล้วมีการจองผูกอยู่ ต้องเพิกถอนก่อนถึงจะลบได้
+                เป็นการบังคับให้คิดสองจังหวะก่อนทำลายข้อมูลที่มีคนใช้จริง
+              */}
+              {!approved && !confirmingDelete && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="danger"
+                  disabled={busy}
+                  onClick={() => setConfirmingDelete(true)}
+                >
+                  ปฏิเสธ
+                </Button>
+              )}
+            </div>
           </div>
 
+          {confirmingDelete && (
+            <form action={deleteAction} className="flex flex-col gap-2 border-t border-border pt-3">
+              <input type="hidden" name="userId" value={user.id} />
+              <p className="text-sm">
+                ลบบัญชีของ {user.name} ({user.email}) ถาวรหรือไม่? กู้คืนไม่ได้
+                และเจ้าตัวจะสมัครใหม่ได้ทันที
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={deletePending}
+                  onClick={() => setConfirmingDelete(false)}
+                >
+                  ไม่ลบแล้ว
+                </Button>
+                <Button type="submit" size="sm" variant="danger" loading={deletePending}>
+                  ยืนยันลบบัญชี
+                </Button>
+              </div>
+            </form>
+          )}
+
           {state.error && <Alert>{state.error}</Alert>}
-        </form>
+          {statusState.error && <Alert>{statusState.error}</Alert>}
+          {deleteState.error && <Alert>{deleteState.error}</Alert>}
+        </div>
       )}
     </li>
   );
@@ -100,11 +196,32 @@ export function UserRoleTable({
   users: AppUser[];
   currentUserId: string;
 }) {
+  /*
+   * คนที่รออนุมัติขึ้นก่อนเสมอ แล้วค่อยเรียงตามวันสมัคร (เก่าสุดก่อน)
+   *
+   * ★ นี่คืองานเดียวที่ admin เปิดหน้านี้มาทำ ถ้าคนรออนุมัติไปปนอยู่กลางรายชื่อ
+   *   พนักงานใหม่จะถูกลืมไว้เป็นวันๆ โดยไม่มีอะไรเตือน — เรียงให้ถูกคือฟีเจอร์ ไม่ใช่ความสวยงาม
+   * ★ คัดลอกอาเรย์ก่อน sort เพราะ sort แก้ของเดิมในที่ ซึ่ง props ไม่ใช่ของเรา
+   */
+  const ordered = [...users].sort((a, b) => {
+    if (a.status !== b.status) return a.status === "pending" ? -1 : 1;
+    return a.createdAt.getTime() - b.createdAt.getTime();
+  });
+
+  const pendingCount = ordered.filter((u) => u.status === "pending").length;
+
   return (
-    <ul className="flex flex-col gap-3">
-      {users.map((user) => (
-        <UserRoleRow key={user.id} user={user} isSelf={user.id === currentUserId} />
-      ))}
-    </ul>
+    <div className="flex flex-col gap-3">
+      {pendingCount > 0 && (
+        <p className="text-sm text-muted">
+          มี <span className="text-foreground font-medium">{pendingCount}</span> บัญชีรอการอนุมัติ
+        </p>
+      )}
+      <ul className="flex flex-col gap-3">
+        {ordered.map((user) => (
+          <UserRoleRow key={user.id} user={user} isSelf={user.id === currentUserId} />
+        ))}
+      </ul>
+    </div>
   );
 }

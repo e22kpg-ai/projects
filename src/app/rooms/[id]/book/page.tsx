@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRoomById, getRoomBookings } from "@/adapters/driving/queries/room.queries";
-import { requireUser } from "@/adapters/driving/queries/session.queries";
+import { requireApprovedUser } from "@/adapters/driving/queries/session.queries";
 import { BookingForm, type BookedSlot } from "@/components/booking/BookingForm";
 import { NavBar } from "@/components/layout/NavBar";
 import { addDays, toISODate, todayISO } from "@/components/ui/date-utils";
@@ -12,7 +12,7 @@ import { formatTimeOfDay } from "@/components/ui/time-utils";
 const LOOKAHEAD_DAYS = 60;
 
 export default async function BookRoomPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  await requireApprovedUser();
 
   const { id } = await params;
 

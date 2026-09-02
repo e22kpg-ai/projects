@@ -92,3 +92,25 @@ export class InvalidDateRangeError extends DomainError {
     this.name = "InvalidDateRangeError";
   }
 }
+
+/*
+ * บัญชีที่ admin ยังไม่อนุมัติ
+ *
+ * แยกจาก ForbiddenError โดยตั้งใจ — ForbiddenError แปลว่า "คุณไม่มีสิทธิ์อันนี้"
+ * ส่วนอันนี้แปลว่า "ยังไม่ถึงตาคุณ รออีกหน่อย" ซึ่งผู้ใช้ต้องทำคนละอย่างกัน
+ * และหน้าเว็บก็ต้องพาไปคนละที่ (รออนุมัติ ไม่ใช่ 404)
+ */
+export class AccountPendingError extends DomainError {
+  constructor(message = "บัญชีของคุณรอผู้ดูแลระบบอนุมัติอยู่ ยังใช้งานส่วนนี้ไม่ได้") {
+    super(message);
+    this.name = "AccountPendingError";
+  }
+}
+
+/** ข้อมูลสมัครสมาชิกไม่ผ่านกฎ (โดเมนอีเมล สังกัด ฯลฯ) */
+export class InvalidSignupError extends DomainError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidSignupError";
+  }
+}

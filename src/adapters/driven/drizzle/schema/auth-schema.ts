@@ -1,9 +1,10 @@
-// Generated via `npm run auth:generate-schema`, plus two manual patches:
+// Generated via `npm run auth:generate-schema`, plus three manual patches:
 // (1) the `issuer` column + unique index on `account` (better-auth 1.7's
 // "account identity is scoped by issuer" change) — the installed CLI version
 // did not emit it.
-// (2) the `role` column on `user` — a DIY RBAC field (paired with the
-// `user.additionalFields.role` config in auth.ts), deliberately NOT using
+// (2) the `role`, `status` and `affiliation` columns on `user` — DIY RBAC and
+// approval fields (paired with the
+// `user.additionalFields` config in auth.ts), deliberately NOT using
 // better-auth's official `admin()` plugin, since that plugin would also add
 // unused `banned`/`banReason`/`banExpires`/`impersonatedBy` columns.
 // Re-run the generator after upgrading better-auth and diff before accepting,
@@ -20,6 +21,12 @@ export const user = sqliteTable("user", {
     .notNull(),
   image: text("image"),
   role: text("role").notNull().default("user"),
+  // (3) approval workflow: บัญชีใหม่เริ่มที่ 'pending' จนกว่า admin จะอนุมัติ
+  //     ค่าตั้งต้นเป็น 'pending' โดยตั้งใจ — ถ้าเผลอตั้งเป็น 'approved' ระบบจะเปิดรับ
+  //     ทุกคนที่สมัครเข้ามาโดยไม่มีใครรู้ตัว ซึ่งเป็นสิ่งที่ฟีเจอร์นี้มีไว้กันพอดี
+  status: text("status").notNull().default("pending"),
+  // สังกัดที่กรอกตอนสมัคร nullable เพราะบัญชีที่มีอยู่ก่อน migration ไม่มีค่านี้
+  affiliation: text("affiliation"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),

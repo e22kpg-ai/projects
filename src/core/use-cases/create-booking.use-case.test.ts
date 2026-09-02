@@ -10,7 +10,8 @@ import {
 } from "@/core/domain/errors";
 import type { BookingRepository } from "@/core/ports/booking-repository.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
-import { makeCreateBooking } from "./create-booking.use-case";
+import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
+import { makeCreateBooking, type CreateBookingInput } from "./create-booking.use-case";
 
 /* "ตอนนี้" ของทุกเทสต์ — ตรึงไว้ไม่ให้เทสต์เปลี่ยนผลตามเวลาที่รันจริง */
 const NOW = new Date("2026-09-02T09:00:00");
@@ -51,8 +52,19 @@ function makeDeps(overrides?: { existing?: Booking[]; rooms?: Room[] }) {
   return { deps: { rooms, bookings, clock: { now: () => NOW } }, created };
 }
 
-function input(overrides: Partial<NewBooking> = {}): NewBooking {
+/* ผู้จองที่ผ่านการอนุมัติแล้ว — เคสปกติของเทสต์เกือบทั้งไฟล์ */
+const approvedUser: AuthenticatedUser = {
+  id: "user-1",
+  name: "ผู้จอง",
+  email: "booker@example.com",
+  role: "user",
+  status: "approved",
+  affiliation: "กองบัญชาการ",
+};
+
+function input(overrides: Partial<CreateBookingInput> = {}): CreateBookingInput {
   return {
+    actingUser: approvedUser,
     roomId: "room-1",
     userId: "user-1",
     title: "ประชุมทีม",
