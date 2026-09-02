@@ -1,5 +1,19 @@
 import { config } from "dotenv";
+import { ensureAppTimezone } from "../timezone-guard";
+
 config({ path: ".env.local" });
+
+/*
+ * ★ สคริปต์นี้รันด้วย tsx ไม่ผ่าน instrumentation.ts ของ Next จึงต้องตั้ง timezone เอง
+ *   atLocalTime() ข้างล่างสร้างเวลาจาก "วันนี้" ของ process ตรงๆ ถ้า process รันเป็น UTC
+ *   booking ตัวอย่างจะถูกเขียนลง DB ด้วยเวลาที่คลาดไป 7 ชั่วโมงโดยไม่มี error ให้เห็น
+ *   ซึ่งแย่กว่าการแสดงผลผิด เพราะความผิดนั้นฝังอยู่ในข้อมูลไปแล้ว
+ *
+ *   ต้องเรียกหลัง config() เพื่อให้ TZ ที่ตั้งไว้ใน .env.local มีสิทธิ์ก่อน
+ *   ส่วน import ที่เหลือของไฟล์นี้เป็น dynamic import ใน main() อยู่แล้ว
+ *   จึงไม่มีโมดูลไหนอ่านวันเวลาไปก่อนบรรทัดนี้
+ */
+ensureAppTimezone();
 
 /*
  * ★ สคริปต์นี้สร้างบัญชีทดสอบที่ "รหัสผ่านเป็นที่รู้กัน" (ดู dev-user.ts)
