@@ -1,8 +1,14 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { Select } from "@/components/ui/Select";
+import {
+  BuildingIcon,
+  LeafIcon,
+  MonitorIcon,
+  MoonIcon,
+  SunIcon,
+} from "@/components/ui/Icons";
 import { MODES, SKINS, type Mode, type Skin } from "./theme-config";
 import { useThemeStore } from "./theme-store";
 
@@ -19,9 +25,32 @@ function useThemeHydrated(): boolean {
   );
 }
 
-const SKIN_OPTIONS = SKINS.map((s) => ({ value: s.id, label: s.label }));
-const MODE_OPTIONS = MODES.map((m) => ({ value: m.id, label: m.label }));
+/*
+ * ไอคอนอยู่ที่นี่ ไม่ได้อยู่ใน theme-config.ts เพราะไฟล์นั้นต้องเป็น pure TS ไม่มี React
+ * (inline script กัน FOUC ก็ import มันไปใช้) — ที่นี่คือชั้น UI จึงถือ JSX ได้
+ *
+ * ประกาศเป็น Record<Skin, …> / Record<Mode, …> เต็มรูปแบบ เพิ่ม skin/โหมดใหม่ใน theme-config
+ * แล้วลืมใส่ไอคอน TypeScript จะฟ้องตรงนี้ทันที ไม่หลุดไปเป็นช่องว่างบนหน้าจอ
+ */
+const SKIN_ICONS: Record<Skin, ReactNode> = {
+  corporate: <BuildingIcon className="size-4" />,
+  forest: <LeafIcon className="size-4" />,
+};
 
+const MODE_ICONS: Record<Mode, ReactNode> = {
+  light: <SunIcon className="size-4" />,
+  dark: <MoonIcon className="size-4" />,
+  system: <MonitorIcon className="size-4" />,
+};
+
+const SKIN_OPTIONS = SKINS.map((s) => ({ value: s.id, label: s.label, icon: SKIN_ICONS[s.id] }));
+const MODE_OPTIONS = MODES.map((m) => ({ value: m.id, label: m.label, icon: MODE_ICONS[m.id] }));
+
+/*
+ * ทั้งสองแถวเป็น SegmentedControl ไอคอนล้วนหน้าตาเดียวกัน — skin เคยเป็น <Select> กว้าง 9rem
+ * ซึ่งกินที่บนแถบ nav และต้องกดสองครั้ง (เปิดลิสต์ก่อนค่อยเลือก) ทั้งที่มีให้เลือกแค่สองค่า
+ * พอเป็นปุ่มเรียงกันแล้วเห็นค่าที่เลือกอยู่ทันทีและกดครั้งเดียวจบ เหมือนแถวโหมดสว่าง/มืด
+ */
 export function ThemeSwitcher() {
   const hydrated = useThemeHydrated();
   const skin = useThemeStore((state) => state.skin);
@@ -40,13 +69,12 @@ export function ThemeSwitcher() {
       aria-hidden={hydrated ? undefined : true}
       inert={!hydrated}
     >
-      <Select
+      <SegmentedControl
+        name="theme-skin"
         options={SKIN_OPTIONS}
         value={skin}
         onValueChange={(next) => setSkin(next as Skin)}
         aria-label="ธีมสี"
-        size="sm"
-        className="w-36"
       />
 
       <SegmentedControl

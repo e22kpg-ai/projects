@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field } from "@/components/ui/Field";
-import { CalendarIcon, SearchIcon } from "@/components/ui/Icons";
+import { CalendarIcon, ClockIcon, SearchIcon, UsersIcon } from "@/components/ui/Icons";
 import { Modal } from "@/components/ui/Modal";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Radio, RadioGroup } from "@/components/ui/RadioGroup";
@@ -183,6 +183,18 @@ export function StyleguideContent() {
           value={mode}
           onValueChange={setMode}
           aria-label="มุมมองปฏิทิน"
+        />
+
+        {/* แบบไอคอนล้วน — label ยังต้องมีเสมอ ใช้เป็นทั้ง tooltip และ accessible name */}
+        <SegmentedControl
+          name="view-density"
+          defaultValue="day"
+          options={[
+            { value: "day", label: "รายวัน", icon: <CalendarIcon className="size-4" /> },
+            { value: "hour", label: "รายชั่วโมง", icon: <ClockIcon className="size-4" /> },
+            { value: "people", label: "ตามผู้เข้าร่วม", icon: <UsersIcon className="size-4" /> },
+          ]}
+          aria-label="ความละเอียดของมุมมอง"
         />
 
         <div className="flex flex-wrap gap-2">

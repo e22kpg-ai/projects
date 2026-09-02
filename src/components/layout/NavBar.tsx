@@ -36,8 +36,8 @@ export async function NavBar() {
         <NavLinks role={user?.role} />
 
         <div className="ml-auto flex items-center gap-3">
-          {/* ตัวสลับธีมกินพื้นที่พอสมควร บนจอเล็กจึงซ่อนไว้ก่อน ฟังก์ชันหลักสำคัญกว่า */}
-          <div className="hidden md:block">
+          {/* พอเป็นไอคอนล้วนก็เล็กลงมาก โผล่ได้ตั้งแต่ sm ไม่ต้องรอ md เหมือนตอนยังเป็น Select */}
+          <div className="hidden sm:block">
             <ThemeSwitcher />
           </div>
           <SignOutButton />

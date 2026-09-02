@@ -283,6 +283,13 @@ body {
     @apply peer-checked:bg-brand-subtle peer-checked:text-brand-500;
     @apply peer-focus-visible:ring-2 peer-focus-visible:ring-ring;
   }
+  /*
+   * ตัวเลือกที่เป็นไอคอนล้วน — บีบเป็นจัตุรัสพอดีไอคอน ไม่ต้องมี padding แนวนอนส่วนเกิน
+   * ประกาศไว้ "หลัง" .segment-label เสมอ เพราะ specificity เท่ากัน ตัวหลังถึงจะทับ px-3 ได้
+   */
+  .segment-icon {
+    @apply size-7 justify-center px-0;
+  }
 
   /* ── ชิปตัวเลือกเร็ว เช่น ระยะเวลาการจอง ────────────────────── */
   .chip {
@@ -402,6 +409,37 @@ body {
   }
   .skeleton {
     @apply animate-pulse rounded-control bg-muted/15;
+  }
+
+  /* ── หน้า Landing ───────────────────────────────────────────── */
+  /*
+   * ไล่สีจาก brand-subtle ลงมาหาพื้นหลังปกติ เขียนเป็น CSS ดิบเพราะ utility
+   * ไล่สีของ Tailwind ต้องพึ่ง arbitrary syntax ซึ่งโปรเจกต์นี้ห้ามใช้
+   * อ้าง --ds-* โดยตรงจึงเปลี่ยนตาม skin/โหมดให้เองอยู่แล้ว
+   */
+  .landing-hero {
+    background-image: linear-gradient(to bottom, var(--ds-brand-subtle), var(--ds-background));
+  }
+  /* กรอบภาพจำลองหน้าจอใน hero — เป็นของตกแต่ง ไม่ใช่ข้อมูลจริง */
+  .preview-frame {
+    @apply overflow-hidden rounded-card border border-border bg-card shadow-lift;
+  }
+  .preview-bar {
+    @apply flex items-center gap-1.5 border-b border-border bg-card-raised px-3 py-2;
+  }
+  .preview-dot {
+    @apply size-2 rounded-pill bg-muted/40;
+  }
+  /* แท่งจำลองช่วงเวลาในปฏิทิน: ที่ถูกจองแล้ว กับที่ยังว่าง */
+  .preview-slot {
+    @apply rounded-tight bg-brand-500;
+  }
+  .preview-slot-free {
+    @apply rounded-tight bg-muted/15;
+  }
+  /* วงกลมเลขลำดับของขั้นตอนใช้งาน */
+  .step-number {
+    @apply grid size-9 shrink-0 place-items-center rounded-pill bg-brand-subtle text-sm font-semibold text-brand-500;
   }
 }
 

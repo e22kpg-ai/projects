@@ -167,3 +167,52 @@ export function MenuIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function SunIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="8" cy="8" r="3.25" />
+      <path d="M8 1v1.25M8 13.75V15M15 8h-1.25M2.25 8H1M12.95 3.05l-.88.88M3.93 12.07l-.88.88M12.95 12.95l-.88-.88M3.93 3.93l-.88-.88" />
+    </Svg>
+  );
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M8 2a4 4 0 0 0 6 6 6 6 0 1 1-6-6Z" />
+    </Svg>
+  );
+}
+
+/** จอคอมพิวเตอร์ — ใช้สื่อโหมด "ตามระบบ" (ตามค่าที่เครื่องตั้งไว้) */
+export function MonitorIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="1.5" y="2.5" width="13" height="9" rx="1.5" />
+      <path d="M5.5 14h5M8 11.5V14" />
+    </Svg>
+  );
+}
+
+/** ตึกออฟฟิศ — ใช้สื่อ skin "องค์กร" */
+export function BuildingIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M2.5 14V3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v11" />
+      <path d="M9.5 14V6.5h3a1 1 0 0 1 1 1V14" />
+      <path d="M1.5 14h13" />
+      <path d="M5 5h2M5 8h2M11.5 10h.5" />
+    </Svg>
+  );
+}
+
+/** ใบไม้ — ใช้สื่อ skin "ป่าไม้" */
+export function LeafIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7.3 13.3A4.7 4.7 0 0 1 6.5 4.1C10.3 3.3 11.3 3 12.7 1.3c.7 1.3 1.3 2.8 1.3 5.4 0 3.7-3.2 6.6-6.7 6.6Z" />
+      <path d="M1.3 14c0-2 1.2-3.6 3.4-4C6.3 9.7 8 8.7 8.7 8" />
+    </Svg>
+  );
+}
