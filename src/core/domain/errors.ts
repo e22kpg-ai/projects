@@ -85,3 +85,10 @@ export class BookingAlreadyEndedError extends DomainError {
     this.name = "BookingAlreadyEndedError";
   }
 }
+
+export class InvalidDateRangeError extends DomainError {
+  constructor(message = "ช่วงวันที่ไม่ถูกต้อง") {
+    super(message);
+    this.name = "InvalidDateRangeError";
+  }
+}

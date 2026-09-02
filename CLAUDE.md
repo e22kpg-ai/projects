@@ -51,8 +51,9 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
 
 - **ห้าม hardcode** hex color, ขนาด px ลอยๆ, arbitrary Tailwind value (`bg-[#1234ab]`, `text-[13px]`)
   และ **ห้ามใช้ Tailwind named color** (`text-red-600`, `bg-green-500`) เพราะไม่เปลี่ยนตาม skin/โหมด
-  — ข้อยกเว้นเดียวคือ **layout ที่คำนวณแบบ dynamic**: `gridColumn`/`gridRow` ใน `CalendarGrid`
-    และ `top`/`left`/`minWidth` ที่คำนวณจาก `getBoundingClientRect()` ใน `use-anchored-position.ts`
+  — ข้อยกเว้นเดียวคือ **layout ที่คำนวณแบบ dynamic**: `gridColumn`/`gridRow` ใน `CalendarGrid`,
+    `top`/`left`/`minWidth` ที่คำนวณจาก `getBoundingClientRect()` ใน `use-anchored-position.ts`
+    และ `width` เป็นเปอร์เซ็นต์ของแถบ `.usage-bar-fill` ใน `UsageReportView`
     (สี/spacing/typography ยังห้าม inline เด็ดขาด)
 - สี: `bg-background`, `text-foreground`, `bg-card`, `bg-card-raised`, `bg-overlay`, `text-muted`, `border-border`,
   `bg-brand-500`, `bg-brand-600` (hover), `bg-brand-subtle`, `text-on-brand`, `ring-ring`,

@@ -7,6 +7,7 @@ import { makeCreateBooking } from "@/core/use-cases/create-booking.use-case";
 import { makeCancelBooking } from "@/core/use-cases/cancel-booking.use-case";
 import { makeListRoomsWithStatus } from "@/core/use-cases/list-rooms-with-status.use-case";
 import { makeListBookingsInRange } from "@/core/use-cases/list-bookings-in-range.use-case";
+import { makeSummarizeRoomUsage } from "@/core/use-cases/summarize-room-usage.use-case";
 import { makeCreateRoom } from "@/core/use-cases/create-room.use-case";
 import { makeUpdateRoom } from "@/core/use-cases/update-room.use-case";
 import { makeDeleteRoom } from "@/core/use-cases/delete-room.use-case";
@@ -32,7 +33,12 @@ export const container = {
     bookings: bookingRepository,
     clock,
   }),
-  listBookingsInRange: makeListBookingsInRange({ bookings: bookingRepository }),
+  listBookingsInRange: makeListBookingsInRange({ bookings: bookingRepository, clock }),
+  summarizeRoomUsage: makeSummarizeRoomUsage({
+    bookings: bookingRepository,
+    rooms: roomRepository,
+    clock,
+  }),
   getRoomById: (id: string) => roomRepository.findById(id),
   listRoomsPlain: () => roomRepository.findAll(),
   createRoom: makeCreateRoom({ rooms: roomRepository }),
