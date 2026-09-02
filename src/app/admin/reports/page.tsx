@@ -5,7 +5,7 @@ import { UsageReportView } from "@/components/admin/UsageReportView";
 import { NavBar } from "@/components/layout/NavBar";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { formatThaiLong, safeISODateParam, todayISO } from "@/components/ui/date-utils";
+import { addDays, formatThaiLong, safeISODateParam, todayISO } from "@/components/ui/date-utils";
 import { DomainError } from "@/core/domain/errors";
 
 export const metadata = {
@@ -31,7 +31,15 @@ export default async function AdminReportsPage({
 
   /* คำนวณ "วันนี้" ที่ server ครั้งเดียวแล้วส่งลงไปให้ toolbar ใช้ต่อ */
   const today = todayISO();
-  const defaultFrom = `${today.slice(0, 7)}-01`;
+  /*
+   * ค่าตั้งต้นเป็น 30 วันล่าสุด ไม่ใช่ "เดือนนี้"
+   *
+   * ของเดิมใช้วันแรกของเดือน ซึ่งพังตอนต้นเดือน — เปิดรายงานวันที่ 2 จะได้ช่วงแค่สองวัน
+   * แล้วหน้ารายงานขึ้นเลขหลักเดียวเหมือนไม่มีใครใช้ห้องเลย ทั้งที่เดือนก่อนมีเป็นสิบครั้ง
+   * ช่วงแบบเลื่อนได้ให้ค่าที่มีความหมายเสมอ ไม่ว่าจะเปิดดูวันไหนของเดือน
+   * (ยังเลือก "เดือนนี้" ได้จากปุ่มลัดในแถบด้านบน)
+   */
+  const defaultFrom = addDays(today, -29);
 
   const from = safeISODateParam(params.from, defaultFrom);
   const rawTo = safeISODateParam(params.to, today);
