@@ -18,11 +18,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ★ ต้องเป็นเวอร์ชันเดียวกับที่ใช้เขียน package-lock.json ไม่ใช่ "เวอร์ชันที่ยังซัพพอร์ตอยู่"
+      #
+      #   ของเดิมตั้งไว้ที่ 22 (มากับ npm 10) ส่วนเครื่องที่พัฒนาใช้ 24 (npm 11)
+      #   npm 11 เขียน lock file ในแบบที่ npm 10 คำนวณ tree ออกมาไม่ตรงกัน แล้ว npm ci
+      #   ซึ่งยึด lock เป๊ะๆ จะปฏิเสธทันที ("Missing: esbuild@... from lock file")
+      #   ทั้งที่ npm install ในเครื่องผ่านสบาย เพราะมันยอมแก้ tree ให้เอง
+      #
+      #   กับดักคือมันพังทุกครั้งที่มีคนรัน npm install ในเครื่องแล้ว commit lock ขึ้นมา
+      #   ตรึงให้ตรงกันเสียเลยจึงตัดปัญหาที่ต้นเหตุ ไม่ใช่ไล่ตามแก้ lock ทุกรอบ
+      #   (Node 24 เป็น LTS และ Vercel รองรับทั้ง build และ function แล้ว)
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
+      # npm ci ไม่ใช่ npm install โดยตั้งใจ — ต้องติดตั้งตามที่ lock บอกเป๊ะๆ
+      # ไม่งั้น CI จะทดสอบชุด dependency คนละชุดกับที่ deploy จริง
       - run: npm ci
 
       - run: npm run lint
