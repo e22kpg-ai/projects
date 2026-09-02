@@ -32,7 +32,26 @@ export function makeSetUserStatus(deps: SetUserStatusDeps) {
       throw new ForbiddenError("ไม่สามารถเปลี่ยนสถานะของตัวเองได้");
     }
 
-    const updated = await deps.users.updateStatus(input.targetUserId, input.status);
+    const target = await deps.users.findById(input.targetUserId);
+    if (!target) {
+      throw new UserNotFoundError(input.targetUserId);
+    }
+
+    /*
+     * ★ อีกครึ่งหนึ่งของกติกา "admin ⇒ approved" (ดู set-user-role.use-case.ts)
+     *
+     *   ถ้าปล่อยให้เพิกถอนสถานะของ admin ได้ตรงๆ จะเหลือ admin ที่เข้าระบบไม่ได้
+     *   ซึ่งเป็นสภาพเดียวกับที่กฎนี้มีไว้กัน
+     *
+     *   บังคับให้ลดขั้นเป็นผู้ใช้ทั่วไปก่อน แล้วค่อยเพิกถอน — สองจังหวะแบบเดียวกับ
+     *   ปุ่มปฏิเสธที่โผล่เฉพาะบัญชีที่ยังรออนุมัติ การถอนสิทธิ์ผู้ดูแลระบบ
+     *   ควรเป็นการตัดสินใจที่มองเห็นได้ ไม่ใช่ผลข้างเคียงของการกดปุ่มเดียว
+     */
+    if (input.status === "pending" && target.role === "admin") {
+      throw new ForbiddenError("ต้องลดขั้นเป็นผู้ใช้ทั่วไปก่อน จึงจะเพิกถอนสิทธิ์ได้");
+    }
+
+    const updated = await deps.users.updateAccess(input.targetUserId, { status: input.status });
     if (!updated) {
       throw new UserNotFoundError(input.targetUserId);
     }

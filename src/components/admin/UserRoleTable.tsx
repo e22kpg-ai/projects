@@ -74,6 +74,13 @@ function UserRoleRow({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
   const approved = user.status === "approved";
   const busy = pending || statusPending || deletePending;
 
+  /*
+   * ★ admin ⇒ approved เสมอ (บังคับจริงที่ set-user-status.use-case.ts)
+   *   ปุ่มเพิกถอนจึงไม่โผล่ให้ admin เพราะกดไปก็ถูกปฏิเสธ — ปุ่มที่กดแล้วขึ้น error
+   *   ทุกครั้งแย่กว่าไม่มีปุ่ม ต้องบอกแทนว่าให้ลดขั้นก่อน
+   */
+  const canRevoke = approved && user.role !== "admin";
+
   return (
     <li className="card-flat flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -123,19 +130,25 @@ function UserRoleRow({ user, isSelf }: { user: AppUser; isSelf: boolean }) {
             </form>
 
             <div className="flex flex-wrap items-center gap-2">
-              <form action={statusAction}>
-                <input type="hidden" name="userId" value={user.id} />
-                <input type="hidden" name="status" value={approved ? "pending" : "approved"} />
-                <Button
-                  type="submit"
-                  size="sm"
-                  variant={approved ? "secondary" : "primary"}
-                  loading={statusPending}
-                  disabled={busy}
-                >
-                  {approved ? "เพิกถอนสิทธิ์" : "อนุมัติ"}
-                </Button>
-              </form>
+              {approved && !canRevoke ? (
+                <span className="text-muted text-xs">
+                  ลดขั้นเป็นผู้ใช้ทั่วไปก่อน จึงจะเพิกถอนสิทธิ์ได้
+                </span>
+              ) : (
+                <form action={statusAction}>
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input type="hidden" name="status" value={approved ? "pending" : "approved"} />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant={approved ? "secondary" : "primary"}
+                    loading={statusPending}
+                    disabled={busy}
+                  >
+                    {approved ? "เพิกถอนสิทธิ์" : "อนุมัติ"}
+                  </Button>
+                </form>
+              )}
 
               {/*
                 ปุ่มปฏิเสธโผล่เฉพาะบัญชีที่ยังรออนุมัติ

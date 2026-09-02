@@ -5,6 +5,7 @@ import type { AppUser, UserRepository } from "@/core/ports/user-repository.port"
 import type { BookingRepository } from "@/core/ports/booking-repository.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
 import { makeSetUserStatus } from "./set-user-status.use-case";
+import { makeSetUserRole } from "./set-user-role.use-case";
 import { makeDeleteUser } from "./delete-user.use-case";
 import { makeCreateBooking } from "./create-booking.use-case";
 import { makeCancelBooking } from "./cancel-booking.use-case";
@@ -59,8 +60,7 @@ function userRepo(): UserRepository {
   return {
     findAll: vi.fn(async () => []),
     findById: vi.fn(async (id: string) => appUser(id)),
-    updateRole: vi.fn(async (id, role) => appUser(id, { role })),
-    updateStatus: vi.fn(async (id, status) => appUser(id, { status })),
+    updateAccess: vi.fn(async (id, changes) => appUser(id, changes)),
     delete: vi.fn(async () => {}),
   };
 }
@@ -71,7 +71,7 @@ describe("setUserStatus", () => {
     await expect(
       makeSetUserStatus({ users })({ actingUser: admin, targetUserId: "user-9", status: "approved" }),
     ).resolves.toMatchObject({ status: "approved" });
-    expect(users.updateStatus).toHaveBeenCalledWith("user-9", "approved");
+    expect(users.updateAccess).toHaveBeenCalledWith("user-9", { status: "approved" });
   });
 
   it("admin เพิกถอนสิทธิ์กลับเป็นรออนุมัติได้", async () => {
@@ -90,7 +90,7 @@ describe("setUserStatus", () => {
         status: "approved",
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    expect(users.updateStatus).not.toHaveBeenCalled();
+    expect(users.updateAccess).not.toHaveBeenCalled();
   });
 
   /* ★ กันเคสที่ admin คนสุดท้ายเผลอเพิกถอนตัวเองแล้วไม่มีใครเข้าหน้าอนุมัติได้อีก */
@@ -99,15 +99,79 @@ describe("setUserStatus", () => {
     await expect(
       makeSetUserStatus({ users })({ actingUser: admin, targetUserId: admin.id, status: "pending" }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    expect(users.updateStatus).not.toHaveBeenCalled();
+    expect(users.updateAccess).not.toHaveBeenCalled();
+  });
+
+  /*
+   * ★ กติกา admin ⇒ approved (ครึ่งหลัง)
+   *   เพิกถอนสถานะของ admin ตรงๆ ไม่ได้ ไม่งั้นจะเหลือ admin ที่เข้าระบบไม่ได้
+   *   ต้องลดขั้นเป็นผู้ใช้ทั่วไปก่อน ซึ่งเป็นการตัดสินใจที่มองเห็นได้
+   */
+  it("เพิกถอนสถานะของ admin ตรงๆ ไม่ได้ ต้องลดขั้นก่อน", async () => {
+    const users = userRepo();
+    users.findById = vi.fn(async (id: string) => appUser(id, { role: "admin", status: "approved" }));
+
+    await expect(
+      makeSetUserStatus({ users })({
+        actingUser: admin,
+        targetUserId: "admin-9",
+        status: "pending",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(users.updateAccess).not.toHaveBeenCalled();
+  });
+
+  it("อนุมัติ admin ที่ค้างอยู่ยังทำได้ (เป็นการพาออกจากสภาพพิกล ไม่ใช่พาเข้า)", async () => {
+    const users = userRepo();
+    users.findById = vi.fn(async (id: string) => appUser(id, { role: "admin", status: "pending" }));
+
+    await expect(
+      makeSetUserStatus({ users })({
+        actingUser: admin,
+        targetUserId: "admin-9",
+        status: "approved",
+      }),
+    ).resolves.toMatchObject({ status: "approved" });
   });
 
   it("เปลี่ยนสถานะผู้ใช้ที่ไม่มีอยู่ ต้องได้ UserNotFoundError", async () => {
     const users = userRepo();
-    users.updateStatus = vi.fn(async () => undefined);
+    users.updateAccess = vi.fn(async () => undefined);
     await expect(
       makeSetUserStatus({ users })({ actingUser: admin, targetUserId: "ไม่มี", status: "approved" }),
     ).rejects.toBeInstanceOf(UserNotFoundError);
+  });
+});
+
+describe("setUserRole กับกติกา admin ⇒ approved", () => {
+  /*
+   * ★ ถ้าเลื่อนขั้นแล้วไม่อนุมัติให้ จะได้ "admin ที่ใช้งานไม่ได้"
+   *   requireApprovedUser เด้งเขาไป /pending แล้วบริหารอะไรไม่ได้เลย
+   *   ทั้งที่หน้าจอบอกว่าเป็นผู้ดูแลระบบแล้ว
+   */
+  it("เลื่อนคนที่ยังรออนุมัติขึ้นเป็น admin ต้องอนุมัติให้พร้อมกันในคำสั่งเดียว", async () => {
+    const users = userRepo();
+    await expect(
+      makeSetUserRole({ users })({ actingUser: admin, targetUserId: "user-9", role: "admin" }),
+    ).resolves.toMatchObject({ role: "admin", status: "approved" });
+
+    /* คำสั่งเดียว ไม่ใช่สองรอบ — ถ้ารอบสองพลาดจะเหลือ admin ที่ pending ค้างไว้ */
+    expect(users.updateAccess).toHaveBeenCalledTimes(1);
+    expect(users.updateAccess).toHaveBeenCalledWith("user-9", {
+      role: "admin",
+      status: "approved",
+    });
+  });
+
+  /* ลดขั้นไม่ควรไปยุ่งกับสถานะ คนที่ใช้งานได้อยู่ต้องใช้งานได้ต่อในฐานะผู้ใช้ทั่วไป */
+  it("ลดขั้นเป็นผู้ใช้ทั่วไปต้องไม่แตะสถานะ", async () => {
+    const users = userRepo();
+    await makeSetUserRole({ users })({
+      actingUser: admin,
+      targetUserId: "user-9",
+      role: "user",
+    });
+    expect(users.updateAccess).toHaveBeenCalledWith("user-9", { role: "user" });
   });
 });
 

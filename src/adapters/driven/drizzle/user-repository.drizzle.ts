@@ -1,7 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { AccountStatus } from "@/core/domain/account-rules";
-import type { Role } from "@/core/ports/auth-service.port";
-import type { AppUser, UserRepository } from "@/core/ports/user-repository.port";
+import type { AppUser, UserAccessChanges, UserRepository } from "@/core/ports/user-repository.port";
 import { db } from "./client";
 import { user } from "./schema/auth-schema";
 
@@ -55,21 +53,17 @@ export class DrizzleUserRepository implements UserRepository {
     return row ? toAppUser(row) : undefined;
   }
 
-  async updateRole(id: string, role: Role): Promise<AppUser | undefined> {
-    const [row] = await db
-      .update(user)
-      .set({ role })
-      .where(eq(user.id, id))
-      .returning(columns);
-    return row ? toAppUser(row) : undefined;
-  }
+  async updateAccess(id: string, changes: UserAccessChanges): Promise<AppUser | undefined> {
+    /*
+     * ผู้เรียกส่งมาเฉพาะฟิลด์ที่ต้องการเปลี่ยน จึงต้องกรอง undefined ออกก่อน
+     * ไม่งั้น drizzle จะเขียนทับด้วย undefined แล้วค่าเดิมหายไปเงียบๆ
+     */
+    const set: { role?: UserAccessChanges["role"]; status?: UserAccessChanges["status"] } = {};
+    if (changes.role !== undefined) set.role = changes.role;
+    if (changes.status !== undefined) set.status = changes.status;
+    if (Object.keys(set).length === 0) return this.findById(id);
 
-  async updateStatus(id: string, status: AccountStatus): Promise<AppUser | undefined> {
-    const [row] = await db
-      .update(user)
-      .set({ status })
-      .where(eq(user.id, id))
-      .returning(columns);
+    const [row] = await db.update(user).set(set).where(eq(user.id, id)).returning(columns);
     return row ? toAppUser(row) : undefined;
   }
 

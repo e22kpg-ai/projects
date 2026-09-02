@@ -43,6 +43,10 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
   `session.queries.ts` เป็นแค่ความสะดวก (redirect ไป `/pending`) ส่วน `createBooking`/`cancelBooking`
   โยน `AccountPendingError` เอง เพราะ Server Action ถูกยิงตรงได้โดยไม่ผ่านการเรนเดอร์หน้าเลย
   use-case ใหม่ที่แตะข้อมูลจริงต้องเช็ค `isApproved()` ด้วยเสมอ
+- **กติกา `admin ⇒ approved` เสมอ** — เลื่อนใครขึ้นเป็น admin ต้องตั้ง status เป็น approved
+  ไปในคำสั่งเดียวกัน (`updateAccess` ไม่ใช่ยิงสองรอบ) และเพิกถอนสถานะของ admin ตรงๆ ไม่ได้
+  ต้องลดขั้นเป็นผู้ใช้ทั่วไปก่อน ไม่งั้นจะเกิด "admin ที่ใช้งานไม่ได้" ซึ่งถูก `requireApprovedUser`
+  เด้งไป `/pending` แล้วบริหารอะไรไม่ได้เลยทั้งที่หน้าจอบอกว่าเป็นผู้ดูแลระบบ
 - ห้ามให้ใครเปลี่ยน role หรือ status **ของตัวเอง** (บังคับไว้ใน `set-user-role` / `set-user-status`
   / `delete-user`) — admin คนสุดท้ายที่เผลอกดจะล็อกทุกคนออกจากหน้าจัดการสิทธิ์ถาวร
 - เพิ่มคอลัมน์ที่มี default ให้ตาราง `user` เมื่อไหร่ **ต้องเขียน backfill ต่อท้าย migration เองเสมอ**

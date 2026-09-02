@@ -55,8 +55,7 @@ function userRepo(): UserRepository {
   return {
     findAll: vi.fn(async () => []),
     findById: vi.fn(async (id: string) => row(id)),
-    updateRole: vi.fn(async (id, role) => row(id, { role })),
-    updateStatus: vi.fn(async (id, status) => row(id, { status })),
+    updateAccess: vi.fn(async (id, changes) => row(id, changes)),
     delete: vi.fn(async () => {}),
   };
 }
@@ -108,7 +107,7 @@ describe("การ์ดสิทธิ์ admin", () => {
     await expect(
       makeSetUserRole({ users })({ actingUser: normalUser, targetUserId: "x", role: "admin" }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    expect(users.updateRole).not.toHaveBeenCalled();
+    expect(users.updateAccess).not.toHaveBeenCalled();
   });
 
   it("admin ทำได้ตามปกติ", async () => {
@@ -139,7 +138,7 @@ describe("กฎเฉพาะของ use-case", () => {
     await expect(
       makeSetUserRole({ users })({ actingUser: admin, targetUserId: admin.id, role: "user" }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    expect(users.updateRole).not.toHaveBeenCalled();
+    expect(users.updateAccess).not.toHaveBeenCalled();
   });
 
   it("ความจุต้องมากกว่า 0", async () => {

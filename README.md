@@ -46,6 +46,10 @@ Admins approve, revoke, or reject (delete) accounts at `/admin/users`, where pen
 listed first. Nobody can change their own role or status — that would let the last admin lock
 everyone out of the page that fixes it.
 
+An admin is always approved: promoting someone sets both fields in one write, and an admin's
+access cannot be revoked until they are demoted first. Otherwise you get an admin who is bounced
+to `/pending` and can administer nothing, while the screen still calls them an administrator.
+
 Signup also collects **สังกัด** (affiliation) as free text, shown to admins while they decide.
 
 > Migration `0003` adds these columns and backfills every pre-existing account to `approved`.
