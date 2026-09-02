@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/adapters/driving/queries/session.queries";
 import { container } from "@/composition/container";
+import { CreateUserModal } from "@/components/admin/CreateUserModal";
 import { UserRoleTable } from "@/components/admin/UserRoleTable";
 import { NavBar } from "@/components/layout/NavBar";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,12 @@ export default async function AdminUsersPage() {
             จัดการห้องประชุม
           </Button>
         </div>
+
+        {/*
+          ช่องทางรับคนที่ไม่มีอีเมล @rtarf.mi.th เข้าระบบ — อยู่คู่กับรายชื่อ
+          เพราะเป็นงานเดียวกัน: ตัดสินว่าใครเข้าใช้ระบบได้บ้าง
+        */}
+        <CreateUserModal />
 
         <UserRoleTable users={users} currentUserId={user.id} />
       </main>

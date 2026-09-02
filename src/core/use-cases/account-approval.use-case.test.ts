@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
-import { AccountPendingError, ForbiddenError, UserNotFoundError } from "@/core/domain/errors";
+import {
+  AccountPendingError,
+  ForbiddenError,
+  InvalidSignupError,
+  UserNotFoundError,
+} from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { AppUser, UserRepository } from "@/core/ports/user-repository.port";
 import type { BookingRepository } from "@/core/ports/booking-repository.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
 import { makeSetUserStatus } from "./set-user-status.use-case";
 import { makeSetUserRole } from "./set-user-role.use-case";
+import { makeCreateUser } from "./create-user.use-case";
+import type { AccountProvisioning } from "@/core/ports/account-provisioning.port";
 import { makeDeleteUser } from "./delete-user.use-case";
 import { makeCreateBooking } from "./create-booking.use-case";
 import { makeCancelBooking } from "./cancel-booking.use-case";
@@ -172,6 +179,107 @@ describe("setUserRole กับกติกา admin ⇒ approved", () => {
       role: "user",
     });
     expect(users.updateAccess).toHaveBeenCalledWith("user-9", { role: "user" });
+  });
+});
+
+describe("createUser (admin สร้างบัญชีให้)", () => {
+  function provisioning(): AccountProvisioning {
+    return { createAccount: vi.fn(async () => ({ id: "new-user" })) };
+  }
+
+  /*
+   * ★ หัวใจของ use-case นี้: ต้อง "ไม่" ตรวจโดเมนอีเมล
+   *
+   *   ทั้งฟีเจอร์มีไว้รับคนที่ไม่มีอีเมล @rtarf.mi.th เข้ามา ถ้าวันหลังมีคนเผลอ
+   *   เติมการตรวจโดเมนลงไปที่นี่ ฟีเจอร์จะตายเงียบๆ โดยยังคอมไพล์ผ่าน
+   *   และไม่มีใครรู้จนกว่าจะมีคนพยายามเพิ่มบัญชีให้หน่วยงานภายนอกแล้วทำไม่ได้
+   */
+  it("สร้างบัญชีด้วยอีเมลนอกโดเมนได้ (นี่คือเหตุผลที่ฟีเจอร์นี้มีอยู่)", async () => {
+    const users = userRepo();
+    const prov = provisioning();
+
+    await expect(
+      makeCreateUser({ provisioning: prov, users })({
+        actingUser: admin,
+        name: "คุณสมชาย",
+        email: "somchai@gmail.com",
+        password: "temp-password",
+        affiliation: "บริษัทคู่สัญญา",
+        role: "user",
+      }),
+    ).resolves.toMatchObject({ status: "approved" });
+
+    expect(prov.createAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "somchai@gmail.com" }),
+    );
+  });
+
+  /* admin กรอกฟอร์มสร้างให้ = อนุมัติไปแล้วในตัว ไม่ต้องกดยืนยันสิ่งที่ตัวเองเพิ่งทำ */
+  it("บัญชีที่สร้างทางนี้เป็น approved ทันที และได้ role ตามที่เลือก", async () => {
+    const users = userRepo();
+    await makeCreateUser({ provisioning: provisioning(), users })({
+      actingUser: admin,
+      name: "ผู้ดูแลคนใหม่",
+      email: "newadmin@rtarf.mi.th",
+      password: "temp-password",
+      affiliation: "กองบัญชาการกองทัพไทย",
+      role: "admin",
+    });
+    expect(users.updateAccess).toHaveBeenCalledWith("new-user", {
+      role: "admin",
+      status: "approved",
+    });
+  });
+
+  it("ผู้ใช้ทั่วไปสร้างบัญชีให้คนอื่นไม่ได้ และต้องไม่สร้างอะไรเลย", async () => {
+    const users = userRepo();
+    const prov = provisioning();
+    await expect(
+      makeCreateUser({ provisioning: prov, users })({
+        actingUser: approvedUser,
+        name: "ใครก็ไม่รู้",
+        email: "someone@gmail.com",
+        password: "temp-password",
+        affiliation: "หน่วยงานหนึ่ง",
+        role: "admin",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(prov.createAccount).not.toHaveBeenCalled();
+    expect(users.updateAccess).not.toHaveBeenCalled();
+  });
+
+  it("สังกัดว่างถูกปฏิเสธก่อนสร้างบัญชี", async () => {
+    const prov = provisioning();
+    await expect(
+      makeCreateUser({ provisioning: prov, users: userRepo() })({
+        actingUser: admin,
+        name: "คุณสมหญิง",
+        email: "somying@gmail.com",
+        password: "temp-password",
+        affiliation: "   ",
+        role: "user",
+      }),
+    ).rejects.toBeInstanceOf(InvalidSignupError);
+    expect(prov.createAccount).not.toHaveBeenCalled();
+  });
+
+  /* คนกรอกอีเมลด้วยตัวใหญ่หรือมีช่องว่างติดมาเป็นเรื่องปกติ ต้องเก็บให้เป็นรูปแบบเดียว */
+  it("ตัดช่องว่างและแปลงอีเมลเป็นตัวพิมพ์เล็กก่อนบันทึก", async () => {
+    const prov = provisioning();
+    await makeCreateUser({ provisioning: prov, users: userRepo() })({
+      actingUser: admin,
+      name: "  คุณสมชาย  ",
+      email: "  Somchai@Gmail.COM  ",
+      password: "temp-password",
+      affiliation: "  บริษัทคู่สัญญา  ",
+      role: "user",
+    });
+    expect(prov.createAccount).toHaveBeenCalledWith({
+      name: "คุณสมชาย",
+      email: "somchai@gmail.com",
+      password: "temp-password",
+      affiliation: "บริษัทคู่สัญญา",
+    });
   });
 });
 

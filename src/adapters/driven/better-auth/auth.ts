@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/adapters/driven/drizzle/client";
 import * as schema from "@/adapters/driven/drizzle/schema/schema";
 import { affiliationProblem, emailDomainProblem } from "@/core/domain/account-rules";
+import { isAdminProvisioning } from "./provisioning-context";
 import { allowedSignupDomains } from "./signup-policy";
 
 export const auth = betterAuth({
@@ -58,10 +59,21 @@ export const auth = betterAuth({
     validateUserInfo: async ({ user, source }) => {
       if (source.action !== "create-user") return undefined;
 
-      const email = typeof user.email === "string" ? user.email : "";
-      const domainIssue = emailDomainProblem(email, allowedSignupDomains());
-      if (domainIssue) {
-        return { error: "email_domain_not_allowed", errorDescription: domainIssue };
+      /*
+       * ★ ยกเว้นกฎโดเมนเฉพาะตอน admin สร้างบัญชีให้คนอื่น (ดู provisioning-context.ts)
+       *
+       *   คนที่ไม่มีอีเมล @rtarf.mi.th ต้องเข้าระบบได้ แต่ต้องมี admin เป็นคนพาเข้ามา
+       *   ไม่ใช่เปิดโดเมนสาธารณะให้สมัครเองได้
+       *
+       *   เครื่องหมายนี้ตั้งได้จากโค้ดฝั่ง server ของเราเท่านั้น ส่งมาจาก request ไม่ได้
+       *   ถ้าเป็นฟิลด์ใน body ใครก็ยิงมาเองแล้วปิดกฎนี้ทิ้งได้
+       */
+      if (!isAdminProvisioning()) {
+        const email = typeof user.email === "string" ? user.email : "";
+        const domainIssue = emailDomainProblem(email, allowedSignupDomains());
+        if (domainIssue) {
+          return { error: "email_domain_not_allowed", errorDescription: domainIssue };
+        }
       }
 
       /*

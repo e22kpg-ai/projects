@@ -39,6 +39,12 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
   ไม่งั้นบัญชีเดิมที่โดเมนไม่ตรงจะล็อกอินไม่ได้อีกเลยทันทีที่ deploy
 - `status` และ `role` ใน `additionalFields` ต้องเป็น **`input: false`** ตลอดไป
   ถ้าเปิดให้ส่งเข้ามาได้ ใครก็ POST `{"status":"approved","role":"admin"}` แล้วอนุมัติตัวเองได้ทันที
+- **ข้อยกเว้นกฎโดเมนมีทางเดียว**: `createUser` use-case → `BetterAuthAccountProvisioning` →
+  `runAsAdminProvisioning()` ซึ่งตั้งค่าใน AsyncLocalStorage ให้ `validateUserInfo` อ่าน
+  **ห้ามเปลี่ยนไปใช้ flag ใน body หรือ header เด็ดขาด** เพราะปลอมได้จากข้างนอก
+  และห้ามขยายขอบเขต `runAsAdminProvisioning` ให้ครอบโค้ดส่วนอื่นเพิ่ม —
+  ยิ่งขอบเขตแคบ โอกาสที่โค้ดอื่นจะเผลอเข้ามาอยู่ในนั้นก็ยิ่งน้อย
+  (ถ้าจะเปิดโดเมนสาธารณะเช่น gmail.com แทน ให้กลับไปอ่านเหตุผลใน create-user.use-case.ts ก่อน)
 - **ด่านอนุมัติต้องอยู่ใน use-case ไม่ใช่แค่ที่หน้าเว็บ** — `requireApprovedUser()` ใน
   `session.queries.ts` เป็นแค่ความสะดวก (redirect ไป `/pending`) ส่วน `createBooking`/`cancelBooking`
   โยน `AccountPendingError` เอง เพราะ Server Action ถูกยิงตรงได้โดยไม่ผ่านการเรนเดอร์หน้าเลย

@@ -2,6 +2,7 @@ import { DrizzleRoomRepository } from "@/adapters/driven/drizzle/room-repository
 import { DrizzleBookingRepository } from "@/adapters/driven/drizzle/booking-repository.drizzle";
 import { DrizzleUserRepository } from "@/adapters/driven/drizzle/user-repository.drizzle";
 import { BetterAuthService } from "@/adapters/driven/better-auth/auth-service.adapter";
+import { BetterAuthAccountProvisioning } from "@/adapters/driven/better-auth/account-provisioning.adapter";
 import { SystemClock } from "@/adapters/driven/system-clock";
 import { makeCreateBooking } from "@/core/use-cases/create-booking.use-case";
 import { makeCancelBooking } from "@/core/use-cases/cancel-booking.use-case";
@@ -15,11 +16,13 @@ import { makeListUsers } from "@/core/use-cases/list-users.use-case";
 import { makeSetUserRole } from "@/core/use-cases/set-user-role.use-case";
 import { makeSetUserStatus } from "@/core/use-cases/set-user-status.use-case";
 import { makeDeleteUser } from "@/core/use-cases/delete-user.use-case";
+import { makeCreateUser } from "@/core/use-cases/create-user.use-case";
 
 const roomRepository = new DrizzleRoomRepository();
 const bookingRepository = new DrizzleBookingRepository();
 const userRepository = new DrizzleUserRepository();
 const authService = new BetterAuthService();
+const accountProvisioning = new BetterAuthAccountProvisioning();
 const clock = new SystemClock();
 
 export const container = {
@@ -50,4 +53,5 @@ export const container = {
   setUserRole: makeSetUserRole({ users: userRepository }),
   setUserStatus: makeSetUserStatus({ users: userRepository }),
   deleteUser: makeDeleteUser({ users: userRepository }),
+  createUser: makeCreateUser({ provisioning: accountProvisioning, users: userRepository }),
 };

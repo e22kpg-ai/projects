@@ -52,6 +52,19 @@ to `/pending` and can administer nothing, while the screen still calls them an a
 
 Signup also collects **สังกัด** (affiliation) as free text, shown to admins while they decide.
 
+People without an organisational address — contractors, visiting units, staff whose account is not
+provisioned yet — are added by an admin at `/admin/users` instead. That path skips the domain rule
+on purpose and the account is usable straight away, since an admin filling in the form *is* the
+approval. The system generates a temporary password and shows it once, because there is no mail
+sending yet and nothing stores it afterwards.
+
+The exemption is scoped with `AsyncLocalStorage` (`provisioning-context.ts`) and is only set around
+the call that creates the account, inside a use-case that has already checked the caller is an
+admin. A flag in the request body would have done the same job for anyone willing to send
+`{"provisionedByAdmin":true}` to the public endpoint. Adding `gmail.com` to the allowlist was the
+other option considered and rejected: it is free to everyone on earth, so the domain gate would
+stop filtering anybody and the only remaining defence would be an admin never misreading a row.
+
 > Migration `0003` adds these columns and backfills every pre-existing account to `approved`.
 > Without that backfill the ADD COLUMN default would stamp `pending` on everyone, including the
 > only admin, and lock the whole organisation out on deploy.

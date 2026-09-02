@@ -303,6 +303,75 @@ async function main() {
   await admin.waitForTimeout(3000);
   await shot(admin, "03-role-saved");
 
+  // ---------- admin สร้างบัญชีให้คนที่ไม่มีอีเมลหน่วยงาน ----------
+  /*
+   * ★ ช่องทางนี้คือทางเลือกแทนการเปิด gmail.com ใน allowlist
+   *   จึงต้องพิสูจน์สองอย่างคู่กันเสมอ: สร้างได้จริง และช่องยกเว้น "ไม่รั่ว"
+   *   ออกไปให้คนข้างนอกสมัครเองด้วยอีเมลแบบเดียวกัน
+   */
+  const provisionedEmail = `contractor+${Date.now()}@gmail.com`;
+
+  await admin.goto(`${BASE}/admin/users`);
+  await admin.waitForSelector("text=จัดการสิทธิ์ผู้ใช้", { timeout: 30000 });
+  await admin.click('button:has-text("เพิ่มบัญชีผู้ใช้")');
+  await admin.waitForSelector('input[name="email"]', { timeout: 20000 });
+  await admin.fill('input[name="name"]', "คุณคู่สัญญา");
+  await admin.fill('input[name="email"]', provisionedEmail);
+  await admin.fill('input[name="affiliation"]', "บริษัทคู่สัญญาภายนอก");
+  await admin.click('button[type="submit"]:has-text("สร้างบัญชี")');
+
+  const provisioned = await admin
+    .waitForSelector("text=รหัสผ่านนี้แสดงเพียงครั้งเดียว", { timeout: 30000 })
+    .then(() => true)
+    .catch(() => false);
+  if (provisioned) {
+    ok("admin can create an account for an address outside the organisation domain");
+  } else {
+    fail("admin could not create an out-of-domain account");
+  }
+  await shot(admin, "10-provisioned-account");
+  await admin.click('button:has-text("เสร็จสิ้น")');
+
+  /* บัญชีที่ admin สร้างต้องใช้งานได้ทันที ไม่ไปกองรวมกับคนที่รออนุมัติ */
+  await admin.goto(`${BASE}/admin/users`);
+  await admin.waitForSelector("text=จัดการสิทธิ์ผู้ใช้", { timeout: 30000 });
+  const provisionedRow = admin.locator("li").filter({ hasText: provisionedEmail }).first();
+  if ((await provisionedRow.count()) === 0) {
+    fail("the provisioned account is missing from the user list");
+  } else if ((await provisionedRow.locator("text=ใช้งานได้").count()) > 0) {
+    ok("a provisioned account is usable immediately, with no second approval step");
+  } else {
+    fail("the provisioned account was left waiting for approval");
+  }
+
+  /*
+   * ★ ข้อที่สำคัญที่สุดของบล็อกนี้
+   *
+   *   การยกเว้นกฎโดเมนต้องมีผลเฉพาะตอน admin เป็นคนสร้างเท่านั้น
+   *   ถ้าคนข้างนอกยิง endpoint ด้วยอีเมล gmail แล้วสมัครผ่าน แปลว่าเครื่องหมาย
+   *   provisioning รั่วออกนอกขอบเขต และด่านโดเมนก็ไม่เหลือความหมายอีกต่อไป
+   */
+  const leakCtx = await browser.newContext();
+  const leakProbe = await leakCtx.request.post(`${BASE}/api/auth/sign-up/email`, {
+    headers: { "Content-Type": "application/json", Origin: BASE },
+    data: {
+      email: `leak+${Date.now()}@gmail.com`,
+      password: "leak-password-123",
+      name: "คนนอกที่พยายามสมัครเอง",
+      affiliation: "ไม่มีสังกัด",
+    },
+    failOnStatusCode: false,
+  });
+  const leakBody = await leakProbe.json().catch(() => ({}));
+  if (leakProbe.status() === 403 && leakBody.code === "email_domain_not_allowed") {
+    ok("the admin-provisioning exemption does not leak to public signup");
+  } else {
+    fail(
+      `provisioning exemption leaked: public signup with gmail returned HTTP ${leakProbe.status()} code=${leakBody.code}`,
+    );
+  }
+  await leakCtx.close();
+
   // ---------- non-admin ----------
   const userCtx = await browser.newContext();
   const user = await userCtx.newPage();
