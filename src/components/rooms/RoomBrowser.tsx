@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchIcon } from "@/components/ui/Icons";
 import { Select } from "@/components/ui/Select";
 import { RoomCard } from "./RoomCard";
+import { CAPACITY_OPTIONS, DEFAULT_CAPACITY, matchesCapacity } from "./capacity-filter";
 
 /*
  * แถบกรอง + ตารางการ์ดห้อง
@@ -18,23 +19,9 @@ import { RoomCard } from "./RoomCard";
  * ถ้าเผลอใส่ "use client" ที่ตัวหน้า จะลากการดึงข้อมูลทั้งหมดข้ามฝั่งไปโดยไม่ได้อะไรเลย
  */
 
-const CAPACITY_OPTIONS = [
-  { value: "", label: "ความจุ: ทุกขนาด" },
-  { value: "s", label: "1–4 คน" },
-  { value: "m", label: "5–10 คน" },
-  { value: "l", label: "11 คนขึ้นไป" },
-];
-
-function matchesCapacity(capacity: number, bucket: string): boolean {
-  if (bucket === "s") return capacity <= 4;
-  if (bucket === "m") return capacity >= 5 && capacity <= 10;
-  if (bucket === "l") return capacity >= 11;
-  return true;
-}
-
 export function RoomBrowser({ rooms }: { rooms: RoomWithStatus[] }) {
   const [query, setQuery] = useState("");
-  const [capacity, setCapacity] = useState("");
+  const [capacity, setCapacity] = useState(DEFAULT_CAPACITY);
   const [onlyFree, setOnlyFree] = useState(false);
 
   const visible = useMemo(() => {
@@ -92,7 +79,7 @@ export function RoomBrowser({ rooms }: { rooms: RoomWithStatus[] }) {
       {visible.length === 0 ? (
         <EmptyState
           title="ไม่พบห้องที่ตรงกับเงื่อนไข"
-          description="ลองลดเงื่อนไขลง เช่น เอาตัวกรองความจุออก หรือปิดตัวเลือกเฉพาะห้องที่ว่าง"
+          description="ลองเปลี่ยนช่วงความจุกลับเป็นทุกขนาด หรือปิดตัวเลือกเฉพาะห้องที่ว่าง"
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
