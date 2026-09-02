@@ -14,6 +14,11 @@ function overlapCondition(roomId: string, start: Date, end: Date) {
 }
 
 export class DrizzleBookingRepository implements BookingRepository {
+  async findById(id: string): Promise<Booking | undefined> {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    return booking;
+  }
+
   async findByRoomInRange(roomId: string, start: Date, end: Date): Promise<Booking[]> {
     return db.select().from(bookings).where(overlapCondition(roomId, start, end));
   }
@@ -42,5 +47,9 @@ export class DrizzleBookingRepository implements BookingRepository {
       const [created] = await tx.insert(bookings).values(newBooking).returning();
       return created;
     });
+  }
+
+  async delete(id: string): Promise<void> {
+    await db.delete(bookings).where(eq(bookings.id, id));
   }
 }

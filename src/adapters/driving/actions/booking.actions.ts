@@ -101,3 +101,47 @@ export async function createBookingAction(
    */
   redirect("/rooms?booked=1");
 }
+
+const cancelSchema = z.object({ bookingId: z.string().min(1) });
+
+export interface CancelBookingState {
+  error?: string;
+  /* ใช้บอก Modal ว่าถึงเวลาปิดตัวเองแล้ว — สถานะเริ่มต้นกับ "ทำสำเร็จ" ต้องแยกออกจากกันได้ */
+  success?: boolean;
+}
+
+/*
+ * ยกเลิกการจอง — ตัวการ์ดจริงอยู่ใน cancel-booking.use-case.ts ที่นี่ทำแค่สามอย่าง
+ * รู้ว่าใครเรียก แปลง FormData และแปลง DomainError เป็นข้อความให้ฟอร์ม
+ *
+ * ไม่ redirect เหมือน createBookingAction เพราะผู้ใช้ยังอยู่หน้าปฏิทินหน้าเดิม
+ * revalidatePath ทำให้บล็อกที่เพิ่งยกเลิกหายไปจากตารางเอง
+ */
+export async function cancelBookingAction(
+  _prevState: CancelBookingState,
+  formData: FormData,
+): Promise<CancelBookingState> {
+  const user = await container.authService.getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const parsed = cancelSchema.safeParse({ bookingId: formData.get("bookingId") });
+  if (!parsed.success) {
+    return { error: "ข้อมูลไม่ถูกต้อง" };
+  }
+
+  try {
+    await container.cancelBooking({ bookingId: parsed.data.bookingId, actingUser: user });
+  } catch (err) {
+    if (err instanceof DomainError) {
+      return { error: err.message };
+    }
+    console.error("cancelBookingAction failed", err);
+    return { error: "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง" };
+  }
+
+  revalidatePath("/rooms");
+  revalidatePath("/calendar");
+  return { success: true };
+}

@@ -67,3 +67,21 @@ export class UserNotFoundError extends DomainError {
     this.name = "UserNotFoundError";
   }
 }
+
+/*
+ * ไม่ใส่ bookingId ลงในข้อความ ต่างจาก RoomNotFoundError โดยตั้งใจ
+ * เพราะข้อความนี้ไปโผล่หน้าผู้ใช้จริงตอนกดยกเลิก และ id ไม่ได้ช่วยให้เขาทำอะไรต่อได้
+ */
+export class BookingNotFoundError extends DomainError {
+  constructor(message = "ไม่พบการจองนี้ อาจถูกยกเลิกไปแล้ว") {
+    super(message);
+    this.name = "BookingNotFoundError";
+  }
+}
+
+export class BookingAlreadyEndedError extends DomainError {
+  constructor(message = "การประชุมนี้จบไปแล้ว ยกเลิกย้อนหลังไม่ได้") {
+    super(message);
+    this.name = "BookingAlreadyEndedError";
+  }
+}

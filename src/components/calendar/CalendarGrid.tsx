@@ -29,10 +29,14 @@ export function CalendarGrid({
   rooms,
   bookings,
   dayStart,
+  currentUserId,
+  isAdmin,
 }: {
   rooms: Room[];
   bookings: Booking[];
   dayStart: Date;
+  currentUserId: string;
+  isAdmin: boolean;
 }) {
   if (rooms.length === 0) {
     return (
@@ -115,6 +119,14 @@ export function CalendarGrid({
           return (
             <BookingBlock
               key={booking.id}
+              bookingId={booking.id}
+              /*
+               * เงื่อนไขชุดเดียวกับที่ cancel-booking.use-case.ts ใช้ตัดสินจริง
+               * ที่นี่ตัดสินแค่ว่าจะโชว์ปุ่มไหม ไม่ใช่การบังคับสิทธิ์ — action ตรวจซ้ำเองอยู่แล้ว
+               */
+              canCancel={
+                (isAdmin || booking.userId === currentUserId) && booking.endTime > now
+              }
               title={booking.title}
               roomName={rooms[roomIndex].name}
               startLabel={formatTimeOfDay(booking.startTime)}

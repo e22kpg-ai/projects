@@ -4,6 +4,7 @@ import { DrizzleUserRepository } from "@/adapters/driven/drizzle/user-repository
 import { BetterAuthService } from "@/adapters/driven/better-auth/auth-service.adapter";
 import { SystemClock } from "@/adapters/driven/system-clock";
 import { makeCreateBooking } from "@/core/use-cases/create-booking.use-case";
+import { makeCancelBooking } from "@/core/use-cases/cancel-booking.use-case";
 import { makeListRoomsWithStatus } from "@/core/use-cases/list-rooms-with-status.use-case";
 import { makeListBookingsInRange } from "@/core/use-cases/list-bookings-in-range.use-case";
 import { makeCreateRoom } from "@/core/use-cases/create-room.use-case";
@@ -25,6 +26,7 @@ export const container = {
     rooms: roomRepository,
     clock,
   }),
+  cancelBooking: makeCancelBooking({ bookings: bookingRepository, clock }),
   listRoomsWithStatus: makeListRoomsWithStatus({
     rooms: roomRepository,
     bookings: bookingRepository,

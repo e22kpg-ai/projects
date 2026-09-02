@@ -38,8 +38,10 @@ function makeDeps(overrides?: { existing?: Booking[]; rooms?: Room[] }) {
   };
 
   const bookings: BookingRepository = {
+    findById: vi.fn(async (id) => (overrides?.existing ?? []).find((b) => b.id === id)),
     findByRoomInRange: vi.fn(async () => overrides?.existing ?? []),
     findInRange: vi.fn(async () => overrides?.existing ?? []),
+    delete: vi.fn(),
     create: vi.fn(async (booking: NewBooking) => {
       created.push(booking);
       return { ...booking, id: "new-booking", createdAt: NOW } as Booking;
