@@ -359,6 +359,26 @@ async function main() {
   await shot(admin, "10-provisioned-account");
   await admin.click('button:has-text("เสร็จสิ้น")');
 
+  /*
+   * ★ เปิดกล่องใหม่ต้องได้ฟอร์มเปล่า ไม่ใช่รหัสผ่านของคนก่อนหน้าค้างอยู่
+   *
+   *   useActionState อยู่ใน component ที่ Modal คืน null ตอนปิดก็จริง แต่ถ้าตัวที่ถือ state
+   *   ไม่ถูก unmount ด้วย ค่าจะค้างข้ามการเปิด-ปิด แล้ว admin จะสร้างคนที่สองไม่ได้เลย
+   *   จนกว่าจะ reload ทั้งหน้า — เป็นบั๊กตัวเดียวกับที่ฝั่งจัดการห้องเคยเจอ
+   */
+  await admin.click('button:has-text("เพิ่มบัญชีผู้ใช้")');
+  await admin.waitForSelector('input[name="email"]', { timeout: 20000 });
+  const staleEmail = await admin.inputValue('input[name="email"]');
+  const stalePassword = await admin.locator("text=รหัสผ่านนี้แสดงเพียงครั้งเดียว").count();
+  if (staleEmail === "" && stalePassword === 0) {
+    ok("reopening the create-user modal shows a blank form, not the previous password");
+  } else {
+    fail(
+      `create-user modal kept stale state: email="${staleEmail}" passwordScreen=${stalePassword}`,
+    );
+  }
+  await admin.click('button:has-text("ยกเลิก")');
+
   /* บัญชีที่ admin สร้างต้องใช้งานได้ทันที ไม่ไปกองรวมกับคนที่รออนุมัติ */
   await admin.goto(`${BASE}/admin/users`);
   await admin.waitForSelector("text=จัดการสิทธิ์ผู้ใช้", { timeout: 30000 });
