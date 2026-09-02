@@ -52,7 +52,11 @@ export function LandingHero({ usage }: { usage: RoomUsage | null }) {
           ) : null}
         </div>
 
-        <AppPreview />
+        {/*
+          ส่งจำนวนห้องจริงให้ preview ด้วย ไม่ใช่ปล่อยให้มันตายตัวที่ 3 ห้อง
+          ไม่งั้นตารางจะมีจำนวนคอลัมน์ไม่ตรงกับเลขในแถบสรุปที่อยู่เหนือมันไม่ถึงคืบ
+        */}
+        <AppPreview roomCount={usage?.total ?? null} />
       </div>
     </section>
   );
