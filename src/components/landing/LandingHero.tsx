@@ -1,14 +1,23 @@
 import { Button } from "@/components/ui/Button";
 import { AppPreview } from "./AppPreview";
 
+/** สรุปการใช้งาน ณ วินาทีที่เรนเดอร์ — `null` เมื่อยังไม่มีห้องในระบบหรือดึงข้อมูลไม่สำเร็จ */
+export interface RoomUsage {
+  bookedNow: number;
+  total: number;
+}
+
 /*
  * หัวข้อหลักใช้คำเดียวกับแผงซ้ายของ AuthShell ตั้งใจให้คนที่กด "เข้าสู่ระบบ" ต่อ
  * เจอประโยคเดิมอีกครั้ง จะได้รู้สึกว่ายังอยู่ในระบบเดียวกัน ไม่ใช่หลงไปเว็บอื่น
  *
  * CTA คู่: สมัครใช้งานเป็นปุ่มหลัก เข้าสู่ระบบเป็นปุ่มรอง เพราะคนที่มีบัญชีอยู่แล้ว
  * ส่วนใหญ่จะถูก redirect ไป /rooms ตั้งแต่เปิดหน้านี้ ไม่ค่อยได้เห็นปุ่มนี้อยู่แล้ว
+ *
+ * แถบสรุปใต้ CTA รับตัวเลขมาเป็น prop ไม่ดึงข้อมูลเอง — หน้านี้ยังเป็น presentation ล้วน
+ * และคนที่เห็นเป็นผู้เยี่ยมชมที่ยังไม่ล็อกอิน จึงบอกแค่ "กี่ห้อง" ไม่บอกว่าห้องไหนหรือใครจอง
  */
-export function LandingHero() {
+export function LandingHero({ usage }: { usage: RoomUsage | null }) {
   return (
     <section className="landing-hero border-b border-border">
       <div className="max-w-5xl mx-auto w-full px-6 py-16 grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -32,6 +41,15 @@ export function LandingHero() {
               เข้าสู่ระบบ
             </Button>
           </div>
+
+          {usage ? (
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span className={usage.bookedNow > 0 ? "badge-danger badge-dot" : "badge-success badge-dot"}>
+                {usage.bookedNow > 0 ? `จองอยู่ ${usage.bookedNow} ห้อง` : "ตอนนี้ว่างทุกห้อง"}
+              </span>
+              จากห้องประชุมทั้งหมด {usage.total} ห้อง
+            </p>
+          ) : null}
         </div>
 
         <AppPreview />
