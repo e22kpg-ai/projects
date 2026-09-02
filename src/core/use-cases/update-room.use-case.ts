@@ -1,3 +1,4 @@
+import { isActiveAdmin } from "@/core/domain/account-rules";
 import type { Room, RoomUpdate } from "@/core/domain/entities/room";
 import { capacityProblem } from "@/core/domain/room-rules";
 import { ForbiddenError, InvalidRoomError, RoomNotFoundError } from "@/core/domain/errors";
@@ -16,7 +17,7 @@ export interface UpdateRoomInput {
 
 export function makeUpdateRoom(deps: UpdateRoomDeps) {
   return async function updateRoom(input: UpdateRoomInput): Promise<Room> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
     if (input.changes.capacity !== undefined) {

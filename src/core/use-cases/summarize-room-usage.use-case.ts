@@ -1,3 +1,4 @@
+import { isActiveAdmin } from "@/core/domain/account-rules";
 import type { Booking } from "@/core/domain/entities/booking";
 import { CLOSE_HOUR, OPEN_HOUR } from "@/core/domain/booking-rules";
 import { ForbiddenError, InvalidDateRangeError } from "@/core/domain/errors";
@@ -49,7 +50,7 @@ export function makeSummarizeRoomUsage(deps: SummarizeRoomUsageDeps) {
   return async function summarizeRoomUsage(
     input: SummarizeRoomUsageInput,
   ): Promise<RoomUsageReport> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
 

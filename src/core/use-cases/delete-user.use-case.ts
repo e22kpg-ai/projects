@@ -1,3 +1,4 @@
+import { isActiveAdmin } from "@/core/domain/account-rules";
 import { ForbiddenError, UserNotFoundError } from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { UserRepository } from "@/core/ports/user-repository.port";
@@ -26,7 +27,7 @@ export interface DeleteUserInput {
  */
 export function makeDeleteUser(deps: DeleteUserDeps) {
   return async function deleteUser(input: DeleteUserInput): Promise<void> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
     if (input.targetUserId === input.actingUser.id) {

@@ -1,4 +1,4 @@
-import type { AccountStatus } from "@/core/domain/account-rules";
+import { isActiveAdmin, type AccountStatus } from "@/core/domain/account-rules";
 import { ForbiddenError, UserNotFoundError } from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { AppUser, UserRepository } from "@/core/ports/user-repository.port";
@@ -25,7 +25,7 @@ export interface SetUserStatusInput {
  */
 export function makeSetUserStatus(deps: SetUserStatusDeps) {
   return async function setUserStatus(input: SetUserStatusInput): Promise<AppUser> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
     if (input.targetUserId === input.actingUser.id) {

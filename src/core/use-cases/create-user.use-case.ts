@@ -1,4 +1,4 @@
-import { affiliationProblem } from "@/core/domain/account-rules";
+import { affiliationProblem, isActiveAdmin } from "@/core/domain/account-rules";
 import { ForbiddenError, InvalidSignupError, UserNotFoundError } from "@/core/domain/errors";
 import type { AuthenticatedUser, Role } from "@/core/ports/auth-service.port";
 import type { AccountProvisioning } from "@/core/ports/account-provisioning.port";
@@ -35,7 +35,7 @@ export interface CreateUserInput {
  */
 export function makeCreateUser(deps: CreateUserDeps) {
   return async function createUser(input: CreateUserInput): Promise<AppUser> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
 

@@ -72,3 +72,18 @@ export function affiliationProblem(affiliation: string): string | null {
   }
   return null;
 }
+
+/**
+ * ผู้ใช้คนนี้เป็น admin ที่ใช้งานได้จริงหรือไม่ — เป็น admin **และ** ผ่านการอนุมัติแล้ว
+ *
+ * ★ ทำไมต้องเช็คสองอย่าง ทั้งที่กติกาบอกว่า "admin ⇒ approved เสมอ":
+ *   กติกานั้นถูกรักษาไว้ด้วยมือในทุกที่ที่เขียนคอลัมน์ role/status — use-case สองตัว
+ *   สคริปต์ bootstrap และ seed ถ้ามีที่ไหนพลาดไปที่เดียว (เคยเกิดมาแล้วที่ set-admin.ts
+ *   ซึ่งตั้งแค่ role จนระบบใหม่ตันทั้งระบบ) สภาพ "admin ที่ยังไม่อนุมัติ" จะเกิดขึ้นจริง
+ *   แล้วการ์ดที่ดูแค่ role จะปล่อยให้คนนั้นสั่งงานระดับ admin ได้ทั้งที่ถูกกันออกจากทุกหน้า
+ *
+ *   ตัวกฎเองราคาถูกมาก ส่วนกติกาที่ต้องจำให้ครบทุกจุดนั้นแพงเสมอในระยะยาว
+ */
+export function isActiveAdmin(user: { role: string; status: AccountStatus }): boolean {
+  return user.role === "admin" && isApproved(user);
+}
