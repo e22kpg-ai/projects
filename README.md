@@ -99,10 +99,22 @@ the merge: the currently deployed code does not know they exist. A migration tha
 drops or narrows something is not, and needs to be split so the deploy can happen
 in between.
 
-Production also needs `TZ=Asia/Bangkok` in the Vercel environment. The app sets
-it at runtime if it is missing (see `timezone-guard.ts`) and logs that it had to,
-but that recovery runs after module evaluation has already started, so setting it
-on the host stays the supported configuration rather than the fallback.
+**`TZ` cannot be set on Vercel.** It is on Vercel's reserved-name list, and the
+dashboard rejects it: *"The name of your Environment Variable is reserved."*
+Vercel functions run as UTC, and there is no host-level setting that changes it.
+
+So the timezone is set in code instead, and that is the supported configuration
+here rather than a workaround. `instrumentation.ts` calls `ensureAppTimezone()`
+from `register()`, which Next runs once before the first request on the Node
+runtime; the guard sets `process.env.TZ`, reads the zone back to confirm the
+runtime accepted it, and throws in production if it did not — the one case where
+nothing is left to try. Every deploy logs one line saying it had to correct the
+zone. That line is expected on Vercel, not a fault to chase.
+
+A host that *does* allow `TZ` (a container, a VM, a local shell) should still set
+it there: the guard corrects only the process that calls it, so scripts that never
+reach `register()` — `npm run db:seed` among them — depend on the environment
+being right. That is why `.env.production.local` and `.env.local` still carry it.
 
 ## Project structure
 
