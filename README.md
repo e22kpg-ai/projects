@@ -78,6 +78,32 @@ stop filtering anybody and the only remaining defence would be an admin never mi
 
 `npm run db:seed` also seeds two local-only accounts, `dev@example.com` / `devpassword123` and `admin@example.com` / `adminpassword123`, both already approved. On `/login` and `/signup`, a dev-only button (below the real form) signs in as that account or spins up a fresh throwaway account in one click — both are gated by `process.env.NODE_ENV !== "production"`, so they're not present in a production build.
 
+## Deploying
+
+The app runs on Vercel, and Vercel builds whatever lands on `master`. Merging a
+pull request therefore *is* the deploy — there is no separate button to press, and
+no window between the merge and the new code serving real traffic.
+
+**Run pending migrations against production before merging, not after.** The
+deploy starts on its own, so a schema change that is still waiting at that moment
+means the new code is already live against the old schema. `drizzle.config.ts`
+reads `.env.local` by default so an absent-minded `npm run db:migrate` can only
+reach the dev database; production has to be named out loud:
+
+```bash
+ENV_FILE=.env.production.local npm run db:migrate
+```
+
+Additive migrations (a new table, a nullable column) are safe to apply ahead of
+the merge: the currently deployed code does not know they exist. A migration that
+drops or narrows something is not, and needs to be split so the deploy can happen
+in between.
+
+Production also needs `TZ=Asia/Bangkok` in the Vercel environment. The app sets
+it at runtime if it is missing (see `timezone-guard.ts`) and logs that it had to,
+but that recovery runs after module evaluation has already started, so setting it
+on the host stays the supported configuration rather than the fallback.
+
 ## Project structure
 
 - `src/core/` — domain entities, business rules, ports, use-cases. Pure TypeScript, no framework imports.
