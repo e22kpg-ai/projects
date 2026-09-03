@@ -7,6 +7,7 @@ import {
   type RoomFormState,
 } from "@/adapters/driving/actions/room-admin.actions";
 import type { Room } from "@/core/domain/entities/room";
+import { MAX_ROOM_CAPACITY } from "@/core/domain/room-rules";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
@@ -70,6 +71,8 @@ export function RoomFormModal({
             type="number"
             name="capacity"
             min={1}
+            /* ขอบเขตเดียวกับที่ core บังคับจริง — ที่นี่แค่ให้เบราว์เซอร์ช่วยทักก่อนกดส่ง */
+            max={MAX_ROOM_CAPACITY}
             defaultValue={v?.capacity ?? room?.capacity ?? ""}
             required
           />

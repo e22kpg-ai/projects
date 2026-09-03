@@ -1,3 +1,4 @@
+import { isActiveAdmin } from "@/core/domain/account-rules";
 import { ForbiddenError, RoomNotFoundError } from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
@@ -18,7 +19,7 @@ export interface DeleteRoomInput {
  */
 export function makeDeleteRoom(deps: DeleteRoomDeps) {
   return async function deleteRoom(input: DeleteRoomInput): Promise<void> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
 

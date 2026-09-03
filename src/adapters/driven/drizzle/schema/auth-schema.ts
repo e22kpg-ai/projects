@@ -1,13 +1,17 @@
-// Generated via `npm run auth:generate-schema`, plus two manual patches:
+// Generated via `npm run auth:generate-schema`, plus four manual patches:
 // (1) the `issuer` column + unique index on `account` (better-auth 1.7's
 // "account identity is scoped by issuer" change) — the installed CLI version
 // did not emit it.
-// (2) the `role` column on `user` — a DIY RBAC field (paired with the
-// `user.additionalFields.role` config in auth.ts), deliberately NOT using
+// (2) the `role`, `status` and `affiliation` columns on `user` — DIY RBAC and
+// approval fields (paired with the
+// `user.additionalFields` config in auth.ts), deliberately NOT using
 // better-auth's official `admin()` plugin, since that plugin would also add
 // unused `banned`/`banReason`/`banExpires`/`impersonatedBy` columns.
+// (3) the approval-workflow note on `user.status` (inline below).
+// (4) the `rate_limit` table (inline below) — the CLI emits it only when
+// `rateLimit.storage` is already set to "database" in the config.
 // Re-run the generator after upgrading better-auth and diff before accepting,
-// in case either patch still needs to be re-added by hand.
+// in case any patch still needs to be re-added by hand.
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -20,6 +24,12 @@ export const user = sqliteTable("user", {
     .notNull(),
   image: text("image"),
   role: text("role").notNull().default("user"),
+  // (3) approval workflow: บัญชีใหม่เริ่มที่ 'pending' จนกว่า admin จะอนุมัติ
+  //     ค่าตั้งต้นเป็น 'pending' โดยตั้งใจ — ถ้าเผลอตั้งเป็น 'approved' ระบบจะเปิดรับ
+  //     ทุกคนที่สมัครเข้ามาโดยไม่มีใครรู้ตัว ซึ่งเป็นสิ่งที่ฟีเจอร์นี้มีไว้กันพอดี
+  status: text("status").notNull().default("pending"),
+  // สังกัดที่กรอกตอนสมัคร nullable เพราะบัญชีที่มีอยู่ก่อน migration ไม่มีค่านี้
+  affiliation: text("affiliation"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
@@ -86,6 +96,22 @@ export const account = sqliteTable(
     uniqueIndex("account_issuer_accountId_unique").on(table.issuer, table.accountId),
   ],
 );
+
+/*
+ * (4) ตาราง rateLimit ของ better-auth — จะถูกใช้ก็ต่อเมื่อตั้ง rateLimit.storage = "database"
+ *     ในตัวเลือกของ betterAuth() (ดู auth.ts) ค่าตั้งต้นของไลบรารีคือเก็บในหน่วยความจำ
+ *     ซึ่งบน serverless แต่ละ instance นับแยกกัน คนละ instance = โควตาใหม่
+ *
+ *     ชื่อ property ต้องเป็น camelCase ให้ตรงกับ fieldName ที่ better-auth ใช้เปิดตาราง
+ *     (key / count / lastRequest) ส่วนชื่อคอลัมน์ใน SQLite เป็น snake_case ตามไฟล์นี้
+ */
+export const rateLimit = sqliteTable("rate_limit", {
+  id: text("id").primaryKey(),
+  /* ip|path — unique เพราะ better-auth หาแถวด้วยคีย์นี้ตัวเดียวแล้วนับต่อจากค่าเดิม */
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request").notNull(),
+});
 
 export const verification = sqliteTable(
   "verification",

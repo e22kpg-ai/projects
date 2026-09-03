@@ -68,6 +68,21 @@ export function todayISO(): ISODate {
   return toISODate(new Date());
 }
 
+/**
+ * รับค่าดิบจาก URL แล้วคืนวันที่ที่ใช้ได้จริง ถ้าไม่ใช่วันที่ให้ตกกลับไปที่ `fallback`
+ *
+ * ★ เช็คแค่ regex ไม่พอ — "2026-02-30" ผ่าน regex สบายๆ แต่ `new Date(2026, 1, 30)`
+ *   จะเลื่อนไปเป็น 2 มี.ค. เงียบๆ ตามพฤติกรรม rollover ของ Date ผู้ใช้กดดูวันหนึ่ง
+ *   แต่ได้อีกวันโดยไม่มีอะไรบอก จึงต้องแปลงกลับมาเทียบว่าได้ค่าเดิมเป๊ะ
+ *
+ * ★ ค่าที่พังหนักกว่านั้น เช่น "abc" หรือ "2026-13-45" ทำให้ทั้งหน้าปฏิทินล่มมาก่อน
+ *   เพราะกลายเป็น Invalid Date แล้ว NaN ไหลลงไปถึงชั้น query
+ */
+export function safeISODateParam(raw: string | undefined, fallback: ISODate): ISODate {
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return fallback;
+  return toISODate(parseISODate(raw)) === raw ? raw : fallback;
+}
+
 export function addDays(iso: ISODate, days: number): ISODate {
   const date = parseISODate(iso);
   date.setDate(date.getDate() + days);

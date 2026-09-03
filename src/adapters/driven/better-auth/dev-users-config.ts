@@ -5,11 +5,13 @@ export const DEV_USERS = [
     password: "devpassword123",
     name: "Dev User",
     role: "user" as const,
+    affiliation: "กรมยุทธการทหาร",
   },
   {
     email: "admin@example.com",
     password: "adminpassword123",
     name: "Admin User",
     role: "admin" as const,
+    affiliation: "กองบัญชาการกองทัพไทย",
   },
 ];

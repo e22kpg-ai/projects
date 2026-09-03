@@ -1,6 +1,7 @@
 import type { Booking, NewBooking } from "@/core/domain/entities/booking";
 
 export interface BookingRepository {
+  findById(id: string): Promise<Booking | undefined>;
   findByRoomInRange(roomId: string, start: Date, end: Date): Promise<Booking[]>;
   findInRange(start: Date, end: Date, roomId?: string): Promise<Booking[]>;
   /**
@@ -9,4 +10,5 @@ export interface BookingRepository {
    * if a conflict is found at that point.
    */
   create(booking: NewBooking): Promise<Booking>;
+  delete(id: string): Promise<void>;
 }

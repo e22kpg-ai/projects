@@ -1,4 +1,6 @@
+import { isActiveAdmin } from "@/core/domain/account-rules";
 import type { Room, RoomUpdate } from "@/core/domain/entities/room";
+import { capacityProblem } from "@/core/domain/room-rules";
 import { ForbiddenError, InvalidRoomError, RoomNotFoundError } from "@/core/domain/errors";
 import type { AuthenticatedUser } from "@/core/ports/auth-service.port";
 import type { RoomRepository } from "@/core/ports/room-repository.port";
@@ -15,11 +17,14 @@ export interface UpdateRoomInput {
 
 export function makeUpdateRoom(deps: UpdateRoomDeps) {
   return async function updateRoom(input: UpdateRoomInput): Promise<Room> {
-    if (input.actingUser.role !== "admin") {
+    if (!isActiveAdmin(input.actingUser)) {
       throw new ForbiddenError();
     }
-    if (input.changes.capacity !== undefined && input.changes.capacity <= 0) {
-      throw new InvalidRoomError("ความจุต้องมากกว่า 0");
+    if (input.changes.capacity !== undefined) {
+      const capacityIssue = capacityProblem(input.changes.capacity);
+      if (capacityIssue) {
+        throw new InvalidRoomError(capacityIssue);
+      }
     }
 
     const changes = { ...input.changes };

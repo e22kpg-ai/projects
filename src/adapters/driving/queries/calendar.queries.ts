@@ -15,9 +15,13 @@ export async function getCalendarData({ date, roomId }: CalendarQueryParams) {
    * ส่วน isBusyNow ต้องยิง query การจอง "ตอนนี้" เพิ่มอีกหนึ่งชุด (แถมเป็น full scan
    * เพราะไม่ได้ระบุ room_id) แล้วผลลัพธ์ก็ถูกโยนทิ้งโดยไม่มีใครอ่าน
    */
+  /*
+   * excludeEnded: การประชุมที่จบไปแล้วไม่ต้องขึ้นปฏิทิน มันย้ายไปอยู่ในรายงานการใช้ห้องแทน
+   * (ดู /admin/reports) ปฏิทินมีไว้หาช่องว่างเพื่อจอง ส่วนของที่ผ่านไปแล้วเป็นข้อมูลสถิติ
+   */
   const [rooms, bookings] = await Promise.all([
     container.listRoomsPlain(),
-    container.listBookingsInRange({ start: dayStart, end: dayEnd, roomId }),
+    container.listBookingsInRange({ start: dayStart, end: dayEnd, roomId, excludeEnded: true }),
   ]);
 
   return { rooms, bookings, dayStart, dayEnd };

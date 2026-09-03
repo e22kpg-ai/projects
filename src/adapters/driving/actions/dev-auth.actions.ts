@@ -17,6 +17,8 @@ export interface DevCredentials {
   email: string;
   password: string;
   name: string;
+  /** สังกัด — มีเฉพาะตอนสมัครใหม่ ตอนล็อกอินไม่ต้องใช้ */
+  affiliation?: string;
 }
 
 function assertNotProduction() {
@@ -53,7 +55,12 @@ export async function getDevSignupCredentials(): Promise<DevCredentials> {
 
   const suffix = Math.random().toString(36).slice(2, 8);
   return {
+    /*
+     * โดเมน example.local ผ่านได้เฉพาะตอน dev (ดู signup-policy.ts)
+     * ถ้าวันหนึ่งปุ่มนี้หลุดไปทำงานบน production มันจะถูกปฏิเสธที่ validateUserInfo เอง
+     */
     email: `dev+${suffix}@example.local`,
+    affiliation: "หน่วยทดสอบระบบ",
     /* สุ่มใหม่ทุกครั้ง ไม่ใช้รหัสร่วมกับบัญชี seed */
     password: `dev-${Math.random().toString(36).slice(2, 12)}`,
     name: `Dev Tester ${suffix}`,

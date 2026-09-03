@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/components/ui/cx";
+import type { AccountStatus } from "@/core/domain/account-rules";
 import type { Role } from "@/core/ports/auth-service.port";
 
 /*
@@ -17,8 +18,20 @@ const LINKS = [
 
 const ADMIN_LINK = { href: "/admin/rooms", label: "ผู้ดูแลระบบ" } as const;
 
-export function NavLinks({ role }: { role?: Role }) {
+export function NavLinks({ role, status }: { role?: Role; status?: AccountStatus }) {
   const pathname = usePathname();
+
+  /*
+   * ★ บัญชีที่ยังไม่ถูกอนุมัติไม่ต้องเห็นเมนูเลย
+   *
+   *   ลิงก์พวกนี้กดแล้วเด้งกลับ /pending อยู่ดี การโชว์ไว้จึงมีแต่ทำให้คนสับสนว่า
+   *   ตัวเองใช้ได้แล้วหรือระบบพัง — เมนูที่กดไม่ได้จริงแย่กว่าไม่มีเมนู
+   *
+   *   นี่เป็นเรื่องหน้าตาล้วน ไม่ใช่การบังคับสิทธิ์ ตัวจริงอยู่ที่ requireApprovedUser
+   *   และที่ use-case ซึ่งเช็คซ้ำอีกชั้นเสมอ
+   */
+  if (status && status !== "approved") return null;
+
   const links = role === "admin" ? [...LINKS, ADMIN_LINK] : LINKS;
 
   return (

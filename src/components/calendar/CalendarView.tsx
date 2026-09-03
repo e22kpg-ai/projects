@@ -18,6 +18,8 @@ export function CalendarView({
   rooms,
   bookings,
   dayStart,
+  currentUserId,
+  isAdmin,
 }: {
   date: ISODate;
   today: ISODate;
@@ -25,13 +27,22 @@ export function CalendarView({
   rooms: Room[];
   bookings: Booking[];
   dayStart: Date;
+  /* ส่งต่อลงไปให้ตารางตัดสินว่าบล็อกไหนควรมีปุ่มยกเลิก */
+  currentUserId: string;
+  isAdmin: boolean;
 }) {
   const visibleRooms = roomId ? rooms.filter((r) => r.id === roomId) : rooms;
 
   return (
     <div className="flex flex-col gap-4">
       <CalendarToolbar date={date} today={today} roomId={roomId} rooms={rooms} />
-      <CalendarGrid rooms={visibleRooms} bookings={bookings} dayStart={dayStart} />
+      <CalendarGrid
+        rooms={visibleRooms}
+        bookings={bookings}
+        dayStart={dayStart}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

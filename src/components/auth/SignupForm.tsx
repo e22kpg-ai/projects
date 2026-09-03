@@ -26,6 +26,7 @@ export function SignupForm() {
       name: String(formData.get("name")),
       email: String(formData.get("email")),
       password: String(formData.get("password")),
+      affiliation: String(formData.get("affiliation")).trim(),
     });
 
     setPending(false);
@@ -33,7 +34,12 @@ export function SignupForm() {
       setError(signUpError.message ?? "สมัครสมาชิกไม่สำเร็จ");
       return;
     }
-    router.push("/rooms");
+    /*
+     * ไป /pending ตรงๆ ไม่ใช่ /rooms — บัญชีใหม่เริ่มที่สถานะรออนุมัติเสมอ
+     * ถ้าส่งไป /rooms มันจะถูกเด้งต่อมาที่ /pending อยู่ดี เสียรอบไปเปล่าๆ
+     * และระหว่างเด้งผู้ใช้จะเห็นหน้าห้องประชุมแวบหนึ่ง ซึ่งชวนให้เข้าใจผิดว่าใช้ได้แล้ว
+     */
+    router.push("/pending?notice=signedup");
     router.refresh();
   }
 
@@ -42,15 +48,20 @@ export function SignupForm() {
     setPending(true);
 
     /* ค่าคงที่อยู่ฝั่ง server เท่านั้น จึงไม่มีทางติดไปใน bundle ของ production */
-    const { email, password, name } = await getDevSignupCredentials();
-    const { error: signUpError } = await authClient.signUp.email({ name, email, password });
+    const { email, password, name, affiliation } = await getDevSignupCredentials();
+    const { error: signUpError } = await authClient.signUp.email({
+      name,
+      email,
+      password,
+      affiliation: affiliation ?? "",
+    });
 
     setPending(false);
     if (signUpError) {
       setError(signUpError.message ?? "สมัครสมาชิกไม่สำเร็จ");
       return;
     }
-    router.push("/rooms");
+    router.push("/pending?notice=signedup");
     router.refresh();
   }
 
@@ -65,8 +76,28 @@ export function SignupForm() {
         <TextInput type="text" name="name" autoComplete="name" required />
       </Field>
 
-      <Field label="อีเมล" required>
-        <TextInput type="email" name="email" autoComplete="email" required />
+      {/*
+        บอกโดเมนที่ใช้ได้ตั้งแต่ก่อนกรอก ไม่ใช่รอให้กด submit แล้วค่อยขึ้น error
+        คนที่เผลอใช้อีเมลส่วนตัวจะได้รู้ทันที ไม่ต้องเสียเวลากรอกทั้งฟอร์มก่อนถูกปฏิเสธ
+      */}
+      <Field label="อีเมล" hint="ใช้ได้เฉพาะอีเมลของหน่วยงาน (@rtarf.mi.th)" required>
+        <TextInput
+          type="email"
+          name="email"
+          autoComplete="email"
+          placeholder="ชื่อผู้ใช้@rtarf.mi.th"
+          required
+        />
+      </Field>
+
+      <Field label="สังกัด" hint="เช่น กรมยุทธการทหาร" required>
+        <TextInput
+          type="text"
+          name="affiliation"
+          autoComplete="organization"
+          maxLength={120}
+          required
+        />
       </Field>
 
       {/* เดิม minLength={8} ไม่ถูกบอกผู้ใช้เลย จนกด submit แล้วเบราว์เซอร์ค่อยเตือน */}
@@ -79,6 +110,11 @@ export function SignupForm() {
       <Button type="submit" loading={pending} fullWidth>
         {pending ? "กำลังสมัคร..." : "สมัครสมาชิก"}
       </Button>
+
+      {/* บอกล่วงหน้าว่าสมัครเสร็จยังใช้ไม่ได้ทันที กัน expectation ผิดตั้งแต่ต้น */}
+      <p className="text-xs text-muted text-center">
+        หลังสมัครแล้วต้องรอผู้ดูแลระบบอนุมัติก่อนจึงจะเริ่มจองห้องประชุมได้
+      </p>
 
       {process.env.NODE_ENV !== "production" && (
         <>

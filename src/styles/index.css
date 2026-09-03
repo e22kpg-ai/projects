@@ -441,6 +441,49 @@ body {
   .step-number {
     @apply grid size-9 shrink-0 place-items-center rounded-pill bg-brand-subtle text-sm font-semibold text-brand-500;
   }
+
+  /* ── ตารางข้อมูล (รายงานการใช้ห้อง) ────────────────────────── */
+  /*
+   * ที่อื่นในระบบใช้ list ของ card เพราะเป็นรายการที่มีปุ่มให้กด แต่รายงานเป็นตัวเลข
+   * หลายคอลัมน์ที่ต้องกวาดตาเทียบกันในแนวตั้ง <table> จริงจึงอ่านง่ายกว่าและได้ a11y มาฟรี
+   */
+  .data-table {
+    @apply w-full border-collapse text-sm;
+  }
+  .data-table th {
+    @apply border-b border-border px-3 py-2 text-left text-xs font-medium text-muted;
+  }
+  .data-table td {
+    @apply border-b border-border px-3 py-2 align-top;
+  }
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  /* คอลัมน์ตัวเลขชิดขวาและใช้เลขความกว้างเท่ากัน จะได้เทียบหลักกันได้ด้วยสายตา */
+  .data-table .num {
+    @apply text-right tabular-nums;
+  }
+  /* ตัวเลขสรุปก้อนใหญ่ด้านบนรายงาน */
+  /*
+   * เขียน utility เต็มๆ ไม่ @apply card-flat ต่อ — Tailwind v4 @apply คลาสที่อยู่ใน
+   * @layer components ไม่ได้ ทั้งไฟล์จะพังเป็น "Cannot apply unknown utility"
+   */
+  .stat-tile {
+    @apply flex flex-col gap-1 rounded-card bg-card p-4;
+  }
+  .stat-tile .stat-value {
+    @apply text-2xl font-semibold tabular-nums;
+  }
+  .stat-tile .stat-label {
+    @apply text-xs text-muted;
+  }
+  /* แถบสัดส่วนหลังตัวเลขอัตราการใช้งาน อ่านเป็นภาพได้เร็วกว่าตัวเลขล้วน */
+  .usage-bar {
+    @apply h-1.5 w-full overflow-hidden rounded-pill bg-muted/15;
+  }
+  .usage-bar-fill {
+    @apply h-full rounded-pill bg-brand-500;
+  }
 }
 
 /* คนที่ตั้งเครื่องให้ลดการเคลื่อนไหว ไม่ควรเจอ transition ใดๆ จากระบบเรา */

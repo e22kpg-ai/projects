@@ -25,6 +25,42 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
 - Adapter ใหม่ (เช่น เปลี่ยน DB, เปลี่ยนผู้ให้บริการ auth) ต้อง implement interface ใน `src/core/ports/` ให้ครบก่อน แล้วไปประกอบร่างที่ `src/composition/container.ts` เท่านั้น — ห้าม new instance ของ adapter กระจายอยู่หลายที่
 - รายละเอียด infra-only (เช่น transaction, overlap-recheck ระดับ SQL) อยู่ใน adapter (`src/adapters/driven/`) ไม่ใช่ใน use-case
 
+## บัญชีผู้ใช้และสิทธิ์ (ห้ามฝ่าฝืน)
+
+สมัครได้เฉพาะอีเมล `@rtarf.mi.th` และทุกบัญชีใหม่เริ่มที่ `status: "pending"` จนกว่า admin จะอนุมัติ
+
+- กฎล้วนๆ อยู่ที่ `src/core/domain/account-rules.ts` (`emailDomainProblem`, `affiliationProblem`,
+  `isApproved`) — **รับรายการโดเมนเป็นพารามิเตอร์ ห้ามอ่าน `process.env` ใน core**
+  ตัวที่ตอบว่า "ตอนนี้อนุญาตโดเมนไหน" คือ `adapters/driven/better-auth/signup-policy.ts`
+  (production = rtarf.mi.th อย่างเดียว, dev เพิ่ม example.com/example.local ให้ seed กับ e2e ทำงานได้)
+- **ด่านจริงของกฎโดเมนอยู่ที่ `user.validateUserInfo` ใน `auth.ts` เท่านั้น** —
+  `/api/auth/sign-up/email` เป็น endpoint สาธารณะที่ยิงตรงได้ การตรวจในฟอร์มหรือใน Server Action
+  กันได้แค่คนที่เดินผ่านหน้าเว็บ และ hook นี้ต้องเช็คเฉพาะ `source.action === "create-user"`
+  ไม่งั้นบัญชีเดิมที่โดเมนไม่ตรงจะล็อกอินไม่ได้อีกเลยทันทีที่ deploy
+- `status` และ `role` ใน `additionalFields` ต้องเป็น **`input: false`** ตลอดไป
+  ถ้าเปิดให้ส่งเข้ามาได้ ใครก็ POST `{"status":"approved","role":"admin"}` แล้วอนุมัติตัวเองได้ทันที
+- **ข้อยกเว้นกฎโดเมนมีทางเดียว**: `createUser` use-case → `BetterAuthAccountProvisioning` →
+  `runAsAdminProvisioning()` ซึ่งตั้งค่าใน AsyncLocalStorage ให้ `validateUserInfo` อ่าน
+  **ห้ามเปลี่ยนไปใช้ flag ใน body หรือ header เด็ดขาด** เพราะปลอมได้จากข้างนอก
+  และห้ามขยายขอบเขต `runAsAdminProvisioning` ให้ครอบโค้ดส่วนอื่นเพิ่ม —
+  ยิ่งขอบเขตแคบ โอกาสที่โค้ดอื่นจะเผลอเข้ามาอยู่ในนั้นก็ยิ่งน้อย
+  (ถ้าจะเปิดโดเมนสาธารณะเช่น gmail.com แทน ให้กลับไปอ่านเหตุผลใน create-user.use-case.ts ก่อน)
+- **ด่านอนุมัติต้องอยู่ใน use-case ไม่ใช่แค่ที่หน้าเว็บ** — `requireApprovedUser()` ใน
+  `session.queries.ts` เป็นแค่ความสะดวก (redirect ไป `/pending`) ส่วน `createBooking`/`cancelBooking`
+  โยน `AccountPendingError` เอง เพราะ Server Action ถูกยิงตรงได้โดยไม่ผ่านการเรนเดอร์หน้าเลย
+  use-case ใหม่ที่แตะข้อมูลจริงต้องเช็ค `isApproved()` ด้วยเสมอ
+- **กติกา `admin ⇒ approved` เสมอ** — เลื่อนใครขึ้นเป็น admin ต้องตั้ง status เป็น approved
+  ไปในคำสั่งเดียวกัน (`updateAccess` ไม่ใช่ยิงสองรอบ) และเพิกถอนสถานะของ admin ตรงๆ ไม่ได้
+  ต้องลดขั้นเป็นผู้ใช้ทั่วไปก่อน ไม่งั้นจะเกิด "admin ที่ใช้งานไม่ได้" ซึ่งถูก `requireApprovedUser`
+  เด้งไป `/pending` แล้วบริหารอะไรไม่ได้เลยทั้งที่หน้าจอบอกว่าเป็นผู้ดูแลระบบ
+- ห้ามให้ใครเปลี่ยน role หรือ status **ของตัวเอง** (บังคับไว้ใน `set-user-role` / `set-user-status`
+  / `delete-user`) — admin คนสุดท้ายที่เผลอกดจะล็อกทุกคนออกจากหน้าจัดการสิทธิ์ถาวร
+- เพิ่มคอลัมน์ที่มี default ให้ตาราง `user` เมื่อไหร่ **ต้องเขียน backfill ต่อท้าย migration เองเสมอ**
+  drizzle-kit generate ให้มาแค่ ADD COLUMN ซึ่งจะ stamp ค่าตั้งต้นทับทุกแถวที่มีอยู่
+  (ดู `0003_modern_wrecker.sql` เป็นตัวอย่าง)
+- `signup-policy.ts` **ห้ามใส่ `"server-only`"** — `seed.ts` import `auth.ts` ต่อมาถึงไฟล์นี้
+  แล้วรันด้วย tsx เป็นสคริปต์ Node ธรรมดา (เหตุผลเดียวกับที่แยก `dev-users-config.ts` ออกจาก `dev-user.ts`)
+
 ## Design System Rules (ห้ามฝ่าฝืน)
 
 อ้างอิงแนวทางจาก [design-system-ui-consistency](https://ai-agent-academy.easy-ai.online/tips/design-system-ui-consistency)
@@ -51,8 +87,9 @@ Next.js (App Router, TypeScript) + Turso (libSQL) + Drizzle ORM + Better Auth (e
 
 - **ห้าม hardcode** hex color, ขนาด px ลอยๆ, arbitrary Tailwind value (`bg-[#1234ab]`, `text-[13px]`)
   และ **ห้ามใช้ Tailwind named color** (`text-red-600`, `bg-green-500`) เพราะไม่เปลี่ยนตาม skin/โหมด
-  — ข้อยกเว้นเดียวคือ **layout ที่คำนวณแบบ dynamic**: `gridColumn`/`gridRow` ใน `CalendarGrid`
-    และ `top`/`left`/`minWidth` ที่คำนวณจาก `getBoundingClientRect()` ใน `use-anchored-position.ts`
+  — ข้อยกเว้นเดียวคือ **layout ที่คำนวณแบบ dynamic**: `gridColumn`/`gridRow` ใน `CalendarGrid`,
+    `top`/`left`/`minWidth` ที่คำนวณจาก `getBoundingClientRect()` ใน `use-anchored-position.ts`
+    และ `width` เป็นเปอร์เซ็นต์ของแถบ `.usage-bar-fill` ใน `UsageReportView`
     (สี/spacing/typography ยังห้าม inline เด็ดขาด)
 - สี: `bg-background`, `text-foreground`, `bg-card`, `bg-card-raised`, `bg-overlay`, `text-muted`, `border-border`,
   `bg-brand-500`, `bg-brand-600` (hover), `bg-brand-subtle`, `text-on-brand`, `ring-ring`,

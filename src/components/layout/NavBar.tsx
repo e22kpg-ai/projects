@@ -33,7 +33,7 @@ export async function NavBar() {
           <span className="hidden sm:inline">ระบบจองห้องประชุม</span>
         </Link>
 
-        <NavLinks role={user?.role} />
+        <NavLinks role={user?.role} status={user?.status} />
 
         <div className="ml-auto flex items-center gap-3">
           {/* พอเป็นไอคอนล้วนก็เล็กลงมาก โผล่ได้ตั้งแต่ sm ไม่ต้องรอ md เหมือนตอนยังเป็น Select */}

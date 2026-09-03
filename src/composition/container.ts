@@ -2,20 +2,27 @@ import { DrizzleRoomRepository } from "@/adapters/driven/drizzle/room-repository
 import { DrizzleBookingRepository } from "@/adapters/driven/drizzle/booking-repository.drizzle";
 import { DrizzleUserRepository } from "@/adapters/driven/drizzle/user-repository.drizzle";
 import { BetterAuthService } from "@/adapters/driven/better-auth/auth-service.adapter";
+import { BetterAuthAccountProvisioning } from "@/adapters/driven/better-auth/account-provisioning.adapter";
 import { SystemClock } from "@/adapters/driven/system-clock";
 import { makeCreateBooking } from "@/core/use-cases/create-booking.use-case";
+import { makeCancelBooking } from "@/core/use-cases/cancel-booking.use-case";
 import { makeListRoomsWithStatus } from "@/core/use-cases/list-rooms-with-status.use-case";
 import { makeListBookingsInRange } from "@/core/use-cases/list-bookings-in-range.use-case";
+import { makeSummarizeRoomUsage } from "@/core/use-cases/summarize-room-usage.use-case";
 import { makeCreateRoom } from "@/core/use-cases/create-room.use-case";
 import { makeUpdateRoom } from "@/core/use-cases/update-room.use-case";
 import { makeDeleteRoom } from "@/core/use-cases/delete-room.use-case";
 import { makeListUsers } from "@/core/use-cases/list-users.use-case";
 import { makeSetUserRole } from "@/core/use-cases/set-user-role.use-case";
+import { makeSetUserStatus } from "@/core/use-cases/set-user-status.use-case";
+import { makeDeleteUser } from "@/core/use-cases/delete-user.use-case";
+import { makeCreateUser } from "@/core/use-cases/create-user.use-case";
 
 const roomRepository = new DrizzleRoomRepository();
 const bookingRepository = new DrizzleBookingRepository();
 const userRepository = new DrizzleUserRepository();
 const authService = new BetterAuthService();
+const accountProvisioning = new BetterAuthAccountProvisioning();
 const clock = new SystemClock();
 
 export const container = {
@@ -25,12 +32,18 @@ export const container = {
     rooms: roomRepository,
     clock,
   }),
+  cancelBooking: makeCancelBooking({ bookings: bookingRepository, clock }),
   listRoomsWithStatus: makeListRoomsWithStatus({
     rooms: roomRepository,
     bookings: bookingRepository,
     clock,
   }),
-  listBookingsInRange: makeListBookingsInRange({ bookings: bookingRepository }),
+  listBookingsInRange: makeListBookingsInRange({ bookings: bookingRepository, clock }),
+  summarizeRoomUsage: makeSummarizeRoomUsage({
+    bookings: bookingRepository,
+    rooms: roomRepository,
+    clock,
+  }),
   getRoomById: (id: string) => roomRepository.findById(id),
   listRoomsPlain: () => roomRepository.findAll(),
   createRoom: makeCreateRoom({ rooms: roomRepository }),
@@ -38,4 +51,7 @@ export const container = {
   deleteRoom: makeDeleteRoom({ rooms: roomRepository }),
   listUsers: makeListUsers({ users: userRepository }),
   setUserRole: makeSetUserRole({ users: userRepository }),
+  setUserStatus: makeSetUserStatus({ users: userRepository }),
+  deleteUser: makeDeleteUser({ users: userRepository }),
+  createUser: makeCreateUser({ provisioning: accountProvisioning, users: userRepository }),
 };
