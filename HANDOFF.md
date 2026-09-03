@@ -113,7 +113,9 @@
 8. **helper module ห้ามใส่ `"use client"`** (`cx`, `types`, `date-utils`, `time-utils`, `Icons`, `Spinner`, `Button`)
    เพราะ Server Component อย่าง `CalendarGrid` ต้อง import ได้
 9. **ห้าม `Intl.DateTimeFormat` ในข้อความที่ถูก SSR** — ICU ของ Node กับ browser คนละเวอร์ชันได้ → hydration mismatch
-10. **`TZ=Asia/Bangkok` ต้องตั้งใน production** ไม่งั้นทุกอย่างที่อิง "ตอนนี้" คลาด 7 ชม. แบบหลอกตา
+10. **`TZ` ตั้งบน Vercel ไม่ได้ (ชื่อสงวน) — `timezone-guard.ts` เป็นด่านจริง** เรียกจาก
+    `instrumentation.ts` และ `seed.ts` entry point ใหม่ที่อ่านนาฬิกาต้องเรียก `ensureAppTimezone()` เอง
+    ไม่งั้นทุกอย่างที่อิง "ตอนนี้" คลาด 7 ชม. แบบหลอกตา
 
 ---
 
