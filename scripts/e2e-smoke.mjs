@@ -73,6 +73,22 @@ async function main() {
   await anonPage.waitForURL(/\/login/, { timeout: 20000 }).catch(() => {});
   if (anonPage.url().includes("/login")) ok("forged cookie on /rooms lands on /login");
   else fail(`forged cookie on /rooms stayed at ${anonPage.url()}`);
+
+  /*
+   * ★ /styleguide ต้องเปิดได้ใน dev โดยไม่ต้องล็อกอิน
+   *
+   *   proxy.ts กันหน้านี้ไว้เฉพาะ production (ดูเหตุผลเรื่องสถานะ 404 ในไฟล์นั้น)
+   *   แต่ตอนนี้ /styleguide อยู่ใน matcher ของ proxy แล้ว ถ้าวันหนึ่งมีคนแก้เงื่อนไขพลาด
+   *   หน้านี้จะถูกเด้งไป /login เงียบๆ แล้วทีมจะเสียเครื่องมือตรวจ design system ไปโดยไม่รู้ตัว
+   *   เช็คด้วย cookie ปลอมเหมือนสองเคสบน เพื่อยืนยันว่ามันไม่ได้รอดมาเพราะบังเอิญมี session
+   */
+  const styleguideResponse = await anonPage.goto(`${BASE}/styleguide`);
+  if (!anonPage.url().includes("/login") && styleguideResponse?.status() === 200) {
+    ok("/styleguide เปิดได้ใน dev ไม่ถูก proxy เด้งไป /login");
+  } else {
+    fail(`/styleguide ใน dev ได้สถานะ ${styleguideResponse?.status()} ที่ ${anonPage.url()}`);
+  }
+
   await anon.close();
 
   // ---------- dev signup ----------
