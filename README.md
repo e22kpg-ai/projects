@@ -111,10 +111,15 @@ runtime accepted it, and throws in production if it did not — the one case whe
 nothing is left to try. Every deploy logs one line saying it had to correct the
 zone. That line is expected on Vercel, not a fault to chase.
 
+The guard corrects only the process that calls it, so every entry point that reads
+the clock has to call it. There are two: `register()` above, and `seed.ts`, which
+runs under `tsx` and never reaches `register()` — it calls `ensureAppTimezone()`
+itself, right after `dotenv` loads, before anything reads a date.
+
 A host that *does* allow `TZ` (a container, a VM, a local shell) should still set
-it there: the guard corrects only the process that calls it, so scripts that never
-reach `register()` — `npm run db:seed` among them — depend on the environment
-being right. That is why `.env.production.local` and `.env.local` still carry it.
+it there — the guard then finds the zone already correct and stays silent, which is
+why `.env.example` still carries it. It is a convenience, not a requirement: no
+entry point depends on the environment being right.
 
 ## Project structure
 

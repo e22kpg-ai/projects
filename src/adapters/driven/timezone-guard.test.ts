@@ -128,7 +128,7 @@ describe("ensureAppTimezone", () => {
     expect(env.warn).not.toHaveBeenCalled();
   });
 
-  it("ซ่อมได้ ต้องเตือนให้ไปตั้งที่ host ด้วย และบอกค่าเดิมที่เจอ", () => {
+  it("ซ่อมได้ ต้อง log ให้เห็นหนึ่งครั้ง พร้อมบอกค่าเดิมที่เจอ", () => {
     let current: string | undefined = "UTC";
     const env = environment({
       resolve: () => current,
